@@ -13,6 +13,8 @@ char left = 'a';
 char down = 's';
 char right = 'd';
 
+typedef enum {UP = 0, LEFT, DOWN, RIGHT} directions;
+
 typedef struct pair{
 	int x, y;
 }pair;
@@ -36,11 +38,32 @@ typedef struct arena{
 }arena;
 
 void initSnake(snake* sn, char name[]){
-	sn->mDir = 0;
 	sn->mDead = 0;
 	sn->mLength = 2;
 	// randomly place a snake at some location in the grid
-	
+	int startX = rand() % ROWS;
+	int startY = rand() % COLS;
+	sn->mDir = rand() % 4;
+	printf("%d\n", sn->mDir);
+	for(int i = 0;i < sn->mLength; i++){
+		pair p;
+		if(sn->mDir == LEFT){
+			p.x = startX;
+			p.y = startY + i;
+		}else if(sn->mDir == UP){
+			p.x = startX + i;
+			p.y = startY;
+		}else if(sn->mDir == DOWN){
+			p.x = startX - i;
+			p.y = startY;
+		}else if(sn->mDir == RIGHT){
+			p.x = startX;
+			p.y = startY - i;
+		}
+		printf("%d ", p.x);
+		printf("%d\n", p.y);
+		sn->mLocation[i] = p;
+	}
 	strcpy(sn->mName, name);
 	sn->mSpeed = 0;
 	sn->mScore = 0;
@@ -86,10 +109,17 @@ void initArena(arena* ar, int numberOfSnakes, int level, char names[][3]){
 		ar->mGrid[ar->mFood[i].x][ar->mFood[i].y] = '$';
 	}
 
-	initalize snakes
+	//initalize snakes
 	for(int i = 0;i < numberOfSnakes; i++){
 		initSnake(ar->mSnakes+ i, names[i]);
 	}
+
+	for(int i = 0;i < numberOfSnakes; i++){
+		for(int j = 0;j < ar->mSnakes[i].mLength; j++){
+			ar->mGrid[ar->mSnakes[i].mLocation[j].x][ar->mSnakes[i].mLocation[j].y] = '#';
+		}
+	}
+
 	return;
 }
 
