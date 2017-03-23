@@ -4,7 +4,7 @@
 #include <time.h>
 
 #define ROWS 50
-#define COLS 50
+#define COLS 120
 #define MAXN 50
 
 // key bindings
@@ -44,7 +44,6 @@ void initSnake(snake* sn, char name[]){
 	int startX = rand() % ROWS;
 	int startY = rand() % COLS;
 	sn->mDir = rand() % 4;
-	printf("%d\n", sn->mDir);
 	for(int i = 0;i < sn->mLength; i++){
 		pair p;
 		if(sn->mDir == LEFT){
@@ -60,8 +59,6 @@ void initSnake(snake* sn, char name[]){
 			p.x = startX;
 			p.y = startY - i;
 		}
-		printf("%d ", p.x);
-		printf("%d\n", p.y);
 		sn->mLocation[i] = p;
 	}
 	strcpy(sn->mName, name);
@@ -72,23 +69,18 @@ void initSnake(snake* sn, char name[]){
 void placeFood(arena* ar, int numFood){
 	for(int i = 0;i < numFood; i++){
 		pair p;
-		p.x = rand()%ROWS;
-		p.y = rand()%COLS;
+		do{
+			p.x = rand()%ROWS;
+			p.y = rand()%COLS;
+		}while(ar->mGrid[p.x][p.y] != ' ');
 		ar->mFood[i] = p;
 	}
 }
 
-void initArena(arena* ar, int numberOfSnakes, int level, char names[][3]){
+void initArena(arena* ar, int numberOfPlayers, int level, char names[][MAXN]){
+	srand(time(NULL));
 	ar->mLevel = level;
-	ar->mNumplayers = numberOfSnakes;
-	// place food at random locations according to level
-	if(level == 1){
-		placeFood(ar, 4);
-	}else if(level == 2){
-		placeFood(ar, 8);
-	}else if(level == 3){
-		placeFood(ar, 12);
-	}
+	ar->mNumplayers = numberOfPlayers;
 	// initalize grid graphics 
 	for(int i = 0;i < ROWS; i++){
 		for(int j = 0;j < COLS; j++){
@@ -99,22 +91,23 @@ void initArena(arena* ar, int numberOfSnakes, int level, char names[][3]){
 		ar->mGrid[0][i] = '-';
 		ar->mGrid[ROWS-1][i] = '-';
 	}
-
 	for(int i = 0;i < ROWS; i++){
 		ar->mGrid[i][0] = '|';
 		ar->mGrid[i][COLS-1] = '|';
 	}
-
+	
+	placeFood(ar, 4*level);
+	
 	for(int i = 0;i < 4*level; i++){
 		ar->mGrid[ar->mFood[i].x][ar->mFood[i].y] = '$';
 	}
 
 	//initalize snakes
-	for(int i = 0;i < numberOfSnakes; i++){
+	for(int i = 0;i < numberOfPlayers; i++){
 		initSnake(ar->mSnakes+ i, names[i]);
 	}
 
-	for(int i = 0;i < numberOfSnakes; i++){
+	for(int i = 0;i < numberOfPlayers; i++){
 		for(int j = 0;j < ar->mSnakes[i].mLength; j++){
 			ar->mGrid[ar->mSnakes[i].mLocation[j].x][ar->mSnakes[i].mLocation[j].y] = '#';
 		}
@@ -139,11 +132,16 @@ void moveSnake(snake* sn, char key){
 }
 
 int main(){
-	srand(time(NULL));
 	arena ar;
-	char names[1][3];
-	strcpy(names[0], "kar");
-	initArena(&ar, 1, 1, names);
+	int numberOfPlayers;
+	printf("Enter number of players\n");
+	scanf("%d", &numberOfPlayers);
+	char playerNames[numberOfPlayers][MAXN];
+	for(int i = 0;i < numberOfPlayers; i++){
+		scanf("%s", playerNames[i]);
+	}
+	initArena(&ar, numberOfPlayers, 1, playerNames);
 	printArena(&ar);
+	// puts ("\e[2J\e[1;1H");
 	return 0;
 }
