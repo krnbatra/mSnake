@@ -98,17 +98,3 @@ void moveSnake(snake* sn, char key){
 	return;
 }
 
-int main(){
-	arena ar;
-	int numberOfPlayers;
-	printf("Enter number of players\n");
-	scanf("%d", &numberOfPlayers);
-	char playerNames[numberOfPlayers][MAXN];
-	for(int i = 0;i < numberOfPlayers; i++){
-		scanf("%s", playerNames[i]);
-	}
-	initArena(&ar, numberOfPlayers, 1, playerNames);
-	printArena(&ar);
-	// puts ("\e[2J\e[1;1H");
-	return 0;
-}
