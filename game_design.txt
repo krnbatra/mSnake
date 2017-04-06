@@ -1,4 +1,4 @@
-Game design v1.0
+Game design v1.5
 
 Game architecture : Client-Server
 
@@ -7,28 +7,36 @@ Game architecture : Client-Server
 Modules required:-
 
 1.) Server Module -->
+    1.0) Input required from user
+        a) TCP listening port number
+        b) UDP listening port number
     1.1) Server waits for the players to connect
         a) Receives a player request over TCP connection.
         b) Assigns ID to the player and store information
         c) Sends the ID information to the player
     1.2) When actual game has started.
         a) Receives moves from the hosts over the UDP connection for some time
-        b) Updates the game state
-        c) Sends the game state to every host
-        d) Repeat if atleast snake is alive.
+        b) Sends the moves to every host
+        c) Repeat if over signal not received
 
 2.) Client Module -->
+    2.0) Input required from user
+        a) Server IP address
+        b) Server TCP connection port number
+        c) Server UDP connection port number
+        d) Desired Client UDP number
     2.1) Request to connect
         a) Connect to server via a TCP connection.
-        b) Sends name, IP addr and socket no for UDP connection.
+        b) Sends name, IP addr and port no for UDP connection.
         c) Receives the player Id.
         d) Disconnect.
     2.2) When actual game has started
         a) Wait for the interrupts (key pressed) for some time.
-        b) Sends the key if pressed any to the server over the UDP connection.
-        c) Receives the new game state from server
-        d) Draw the received game state.
-        e) Repeat.
+        b) Sends the key and ID to the server over the UDP connection.
+        c) Receives the game moves from server
+        d) Update the game state.
+        e) Draw the received game state.
+        f) Repeat.
 
 
 ---------------------------------------------------------------------------------------------
@@ -39,18 +47,16 @@ Functions required:-
     1.1) establish_connection(ip_addr:char[], port_no:int) - returns player_id:int
     1.2) get_pressed_key() - returns set_keys:char[] or return key:char
     1.3) send_move() - returns void
-    1.4) receive_state() - returns gamestate:struct gamedata
+    1.4) receive_moves() - returns player_moves : struct moves_t[[]
     1.5) draw_game_state(gamestate : struct gamedata) - returns void
+    1.6) check_for_collision(gamestate : struct gamedata) - returns void
+    1.7) move_snake(player : struct player) - returns void
+    1.8) update_direction(player_moves:struct moves[]) : returns void
 
 2.) Server -->
-    2.1) listen_for_player() - returns player:struct player
+    2.1) listen_for_player(next_free_id : int) - returns player:struct player
     2.2) listen_for_moves() - returns player_moves:struct move[]
-    2.3) update_direction(player_moves:struct moves[]) : returns void
-    2.3) move_snake(id:int) - returns void
-    2.4) next_game_state(gamestate : struct gamedata) - returns gamestate:struct gamedata
-    2.5) check_for_collision(gamestate : struct gamedata) - returns dead_IdList:int[]
-    2.6) remove_player(id:int) - returns void
-    2.7) send_game_state(player:struct player, gamestate:struct gamedata) - returns void
+    2.3) send_game_moves(player_moves: struct moves_t[]) - returns void
 
 
 ----------------------------------------------------------------------------------------------
@@ -58,49 +64,91 @@ Functions required:-
 
 Data Structures Required:-
 
-1.) Client -->
-    1.1) struct gamedata{
-            //Same as server
+1.) Server -->
+    1.1) struct moves_t{
+            //Same as client
+        }
+    1.2) struct player_t{
+            //Same as client
         }
 
-2.) Server -->
-    2.1) struct player{
-            color : color_t
-            points : struct pair[]
+2.) Client -->
+    2.1) struct player_t{
+            player_id : int
+            snake : struct snake_t
             ipaddr : ipaddr_t
             port : int
-            dir : int
             score : int
             highest_score : int
             rank : int
             num_of_wins : int
-            body_symbol : char
             alive : int
+            name : char[]
          }
-    2.2) struct move{
+    2.2) struct snake_t{
+            points : struct pair_t[]
+            length : int
+            color : color_t
+            dir : direction_t
+         }
+    2.2) struct move_t{
             player_id : int
             key : char
          }
-    2.3) struct gamedata{
+    2.3) struct gamedata_t{
             height : int
             width : int
-            players : struct player[]
+            players : struct player_t[]
             level : int
-            food : struct pair[]
-            obstacles : struct pair[]
+            food : struct pair_t[]
+            obstacles : struct pair_t[]
             food_symbol : char
             obstacle_symbol : char
+            request_buffer : char[]
+            no_of_live_players : int
+            no_of_initial_players : int
+            no_of_obstacles : int
+            no_of_food : int
+         }
+    2.4) typedef enum direction_t{
+            UP = 0, DOWN, LEFT, RIGHT;
+         }direction_t;
+    2.5) struct pair_t{
+            int first, second;
          }
 
 
 ---------------------------------------------------------------------------------------------
 
-Additional Functionalities Required ;-
+Changes:-
 
-1.) Game Levels
-2.) Score Board 
+1.) Use diff.
 
 ---------------------------------------------------------------------------------------------
 
-Raise issues and try to integrate the additional functionalities into the design.
+To Do:-
+
+1.)  
+
+---------------------------------------------------------------------------------------------
+
+Assumptions:-
+
+1. Players id is same as the index in the players array
+2. (-1,-1) refers to invalid coordinate
+
+
+---------------------------------------------------------------------------------------------
+
+Additional Functionalities/Details Required :-
+
+0.) UDP Message Format
+1.) TCP Message Format
+2.) Game Levels - Think about variable speed, speed in different levels
+3.) Score Board 
+4.) Game arena implementation details/function prototypes
+
+---------------------------------------------------------------------------------------------
+
+Complete the above list.
 Copy this file, change the version number and then make changes.
