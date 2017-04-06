@@ -1,4 +1,4 @@
-Game design v1.2
+Game design v1.3
 
 Game architecture : Client-Server
 
@@ -57,7 +57,7 @@ Functions required:-
     2.3) update_direction(player_moves:struct moves[]) : returns void
     2.3) move_snake(player : struct player) - returns void
     2.4) next_game_state(gamestate : struct gamedata) - returns gamestate:struct gamedata
-    2.5) check_for_collision(gamestate : struct gamedata) - returns dead_IdList:int[]
+    2.5) check_for_collision(gamestate : struct gamedata) - returns void
     2.6) remove_player(player : struct player) - returns void
     2.7) send_game_state(player:struct player, gamestate:struct gamedata) - returns void
 
@@ -68,14 +68,14 @@ Functions required:-
 Data Structures Required:-
 
 1.) Client -->
-    1.1) struct gamedata{
+    1.1) struct gamedata_t{
             //Same as server
         }
 
 2.) Server -->
-    2.1) struct player{
+    2.1) struct player_t{
             player_id : int
-            snake : struct snake
+            snake : struct snake_t
             ipaddr : ipaddr_t
             port : int
             score : int
@@ -84,27 +84,56 @@ Data Structures Required:-
             num_of_wins : int
             alive : int
          }
-    2.2) struct snake{
-            points : struct pair[]
+    2.2) struct snake_t{
+            points : struct pair_t[]
             length : int
             color : color_t
-            dir : int
+            dir : direction_t
          }
-    2.2) struct move{
+    2.2) struct move_t{
             player_id : int
             key : char
          }
-    2.3) struct gamedata{
+    2.3) struct gamedata_t{
             height : int
             width : int
-            players : struct player[]
+            players : struct player_t[]
             level : int
-            food : struct pair[]
-            obstacles : struct pair[]
+            food : struct pair_t[]
+            obstacles : struct pair_t[]
             food_symbol : char
             obstacle_symbol : char
             request_buffer : char[]
+            no_of_live_players : int
+            no_of_initial_players : int
+            no_of_obstacles : int
+            no_of_food : int
          }
+    2.4) typedef enum direction_t{
+            UP = 0, DOWN, LEFT, RIGHT;
+         }direction_t;
+    2.5) struct pair_t{
+            int first, second;
+         }
+
+
+---------------------------------------------------------------------------------------------
+
+Changes:-
+
+1.) check_for_collision changes the alive flag.
+2.) Added no_of_live_players, no_of_intitial_players, no_of_obstacles, no_of_food fields in
+gamedata_t.
+3.) Changed pass by value to pass by reference.
+4.) Appended _t to all the types.
+5.) New direction_t, pair_t type.
+
+---------------------------------------------------------------------------------------------
+
+Assumptions:-
+
+1. Players id is same as the index in the players array
+2. (-1,-1) refers to invalid coordinate
 
 
 ---------------------------------------------------------------------------------------------
@@ -115,6 +144,7 @@ Additional Functionalities/Details Required :-
 1.) TCP Message Format
 2.) Game Levels - Think about variable speed, speed in different levels
 3.) Score Board 
+4.) Game arena implementation details/function prototypes
 
 ---------------------------------------------------------------------------------------------
 
