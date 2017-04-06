@@ -3,6 +3,9 @@
 #define MAX_OBSTACLES 20
 #define MAX_FOOD 20
 #define MAX_BUFFER 25
+#define MAX_PLAYER_NAME 50
+#define MAXROW 50
+#define MAXCOL 120
 
 typedef int color_t;
 typedef char* ipaddr_t;
@@ -33,13 +36,13 @@ struct player_t{
     int rank;
     int num_of_wins;
     int alive;
+    char name[MAX_PLAYER_NAME];
 };
 
 struct move_t{
     int player_id;
     char key;
 };
-
 
 struct gamedata_t{
     int height;
