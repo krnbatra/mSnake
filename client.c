@@ -6,78 +6,55 @@
 #include <arpa/inet.h>
 #include "client_types.h"
 
-//next_game_state
-
 struct gamedata_t;
 struct pair_t;
 struct player_t;
 void move_snake(struct player_t * player, struct pair_t * food, int no_of_food);
 void next_game_state(struct gamedata_t * gamestate);
 void check_for_collision(struct gamedata_t * gamestate);
-int establish_connection(char ip_addr[], int port_no);
+int establish_connection(char server_ip_addr[], int port_no);
 
-int establish_connection(char ip_addr[], int port_no){
-  int clientSocket;
-  char buffer[1024];
-  struct sockaddr_in serverAddr;
-  socklen_t addr_size;
-  printf("waiting for the connection\n");
-     
-  /*  Create the network socket.   */
-      clientSocket = socket(PF_INET, SOCK_STREAM, 0);
+int establish_connection(char server_ip_addr[], int port_no){
+    int clientSocket;
+    char buffer[1024];
+    struct sockaddr_in serverAddr;
+    socklen_t addr_size;
+    // printf("waiting for the connection\n");
 
-       /*  1) PR_INET Internet domain
-           2) SOCK_STREAM represents Stream socket
-           3) 0 represents Default protocol (TCP in this case)
-       */
+    /*  Create the network socket.   */
+    clientSocket = socket(PF_INET, SOCK_STREAM, 0);
 
-  // Configure settings of the server address
-  /* Address family = Internet */
-     serverAddr.sin_family = AF_INET;
+    /*  1) PR_INET Internet domain
+    2) SOCK_STREAM represents Stream socket
+    3) 0 represents Default protocol (TCP in this case)
+    */
 
-  /* Set port number */
-     serverAddr.sin_port = htons(port_no);
-  /*  In networking we prefer to use big-endian binary 
-      sequencing.  Since in our PC we use small endian binary
-      scheme, we use htons to convert small endian to big
-      endian.  */
+    // Configure settings of the server address
+    /* Address family = Internet */
+    serverAddr.sin_family = AF_INET;
 
-  /* Set IP address to localhost */
-     //char ip_addr[]="172.17.46.48";
-  serverAddr.sin_addr.s_addr = inet_addr(ip_addr);
+    /* Set port number */
+    serverAddr.sin_port = htons(port_no);
+    /*  In networking we prefer to use big-endian binary 
+    sequencing.  Since in our PC we use small endian binary
+    scheme, we use htons to convert small endian to big
+    endian.  */
 
-  /* Set all bits of the padding field to 0 */
-     memset(serverAddr.sin_zero, '\0', sizeof
-     serverAddr.sin_zero);
+    /* Set IP address to localhost */
+    // char ip_addr[] = "172.17.46.179";
+    serverAddr.sin_addr.s_addr = inet_addr(server_ip_addr);
 
-  /* Connect the socket to the server using the address*/
-     addr_size = sizeof serverAddr;
-     connect(clientSocket, (struct sockaddr *) &serverAddr, addr_size);
+    /* Set all bits of the padding field to 0 */
+    memset(serverAddr.sin_zero, '\0', sizeof
+    serverAddr.sin_zero);
 
-  /* Read the message from the server into the buffer */
-     recv(clientSocket, buffer, 1024, 0);
-     return atoi(buffer);
-  /* Print the received message */
-    //  printf("Data received:  %s\n",buffer);
-  	 // if (strcmp(buffer,"")==0)
-  	 // 	return 0;
-     // char *userInput;
-     // userInput = (char *)malloc(sizeof(char)*10);
+    /* Connect the socket to the server using the address*/
+    addr_size = sizeof serverAddr;
+    connect(clientSocket, (struct sockaddr *) &serverAddr, addr_size);
 
-     // printf("Enter your name: ");
-     // scanf("%[^\n\t]s", userInput);
-     // int inputLength;
-     // inputLength = strlen(userInput);
-     // if ( send ( clientSocket, userInput, inputLength, 0) != inputLength )
-     //    {
-     //    	printf("[ERROR] Unable to send the data.\n");
-     //    	return 0;
-     //    }
-    
-    	
     /* Read the message from the server into the buffer */
-    
-  // return 1;
+    recv(clientSocket, buffer, 1024, 0);
+    return atoi(buffer);
 }
 
 void check_for_collision(struct gamedata_t * gamestate){
