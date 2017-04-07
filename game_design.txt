@@ -44,7 +44,7 @@ Modules required:-
 Functions required:-
 
 1.) Client -->
-    1.1) establish_connection(ip_addr:char[], port_no:int) - returns player_id:int
+    1.1) establish_connection(ip_addr:char[], port_no:int) - returns 1 if connection success else 0
     1.2) get_pressed_key() - returns set_keys:char[] or return key:char
     1.3) send_move() - returns void
     1.4) receive_moves() - returns player_moves : struct moves_t[[]
