@@ -4,12 +4,17 @@
 #include <string.h>
 #include <stdlib.h>
 #include <arpa/inet.h>
+#include <unistd.h>
+
+#define BUF_SIZE 2000
 
 int main(){
     int clientSocket;
-    char buffer[1024];
+    char buffer[BUF_SIZE];
     struct sockaddr_in serverAddr;
     socklen_t addr_size;
+    char name[10];
+    scanf("%s", name);
     // printf("waiting for the connection\n");
 
     /*  Create the network socket.   */
@@ -42,10 +47,15 @@ int main(){
     /* Connect the socket to the server using the address*/
     addr_size = sizeof serverAddr;
     connect(clientSocket, (struct sockaddr *) &serverAddr, addr_size);
-
+    int ret = sendto(clientSocket, name, sizeof(name), 0, (struct sockaddr *) &serverAddr, sizeof(serverAddr));
     /* Read the message from the server into the buffer */
-    recv(clientSocket, buffer, 1024, 0);
-    int num = atoi(buffer);
-
-    printf("%d\n", num);
+    // recv(clientSocket, buffer, 1024, 0);
+    // int num = atoi(buffer);
+    // printf("%d\n", num);
+    sleep(10);
+    for(int i = 0;i < 2; i++){
+        ret = recvfrom(clientSocket, buffer, BUF_SIZE, 0, NULL, NULL);
+        fputs(buffer, stdout);
+        printf("\n");
+    }
 }

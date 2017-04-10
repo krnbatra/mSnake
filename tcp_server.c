@@ -8,14 +8,21 @@
 #include <unistd.h>
 #include <signal.h>
 
+#define BUF_SIZE 2000
+#define CLADDR_LEN 100
+
 static int unique_id=0;
+static int count = 0;
+static char names[8][100];
 
 int main(){
+	struct sockaddr_in ips[3];
     int serverSocket = 0, newSocket = 0;
-    char buffer[1024];
-    struct sockaddr_in serverAddr;
-    struct sockaddr_storage serverStorage;
+    char buffer[BUF_SIZE];
+    struct sockaddr_in serverAddr, cl_addr;
+    // struct sockaddr_storage serverStorage;
     socklen_t addr_size;
+    char clientAddr[CLADDR_LEN];
     /*  Create the network socket.   */
     serverSocket = socket(PF_INET, SOCK_STREAM, 0);
     // Configure settings of the server address
@@ -46,10 +53,30 @@ int main(){
     /* Accept call creates a new socket for the incoming connection */
 
     while ( !listen ( serverSocket, 2 ) ){
-        addr_size = sizeof ( serverStorage );
-        newSocket = accept ( serverSocket, (struct sockaddr *) &serverStorage, &addr_size);
+        addr_size = sizeof ( cl_addr );
+        newSocket = accept ( serverSocket, (struct sockaddr *) &cl_addr, &addr_size);
+        inet_ntop(AF_INET, &(cl_addr.sin_addr), clientAddr, CLADDR_LEN);
+        int ret = recvfrom(newSocket, buffer, BUF_SIZE, 0, (struct sockaddr *) &cl_addr, &addr_size);
+        if(ret < 0) {
+            printf("Error receiving data!\n");  
+            exit(1);
+        }
+        strcpy(names[count], buffer);
+        ips[count] = cl_addr;
+        count++;
+        printf("Received data from %s: %s\n", clientAddr, buffer); 
+        memset(buffer, 0, sizeof(buffer));
         sprintf(buffer, "%d", ++unique_id);
-        send  ( newSocket, buffer, 150, 0 );
+        // ret = sendto( newSocket, buffer, 150, 0, (struct sockaddr *) &cl_addr, addr_size);
+        if(count == 2){
+            for(int i = 0;i < 2; i++){
+                for(int j = 0;j < 2; j++){
+                    ret = sendto(newSocket, names[j], BUF_SIZE, 0, (struct sockaddr *) &ips[i], addr_size);
+                    printf("%s\n", names[j]);
+                    memset(buffer, 0, sizeof(buffer));
+                }
+            }
+        }
         close ( newSocket );
         sleep ( 1 );
     }

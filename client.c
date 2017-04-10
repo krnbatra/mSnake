@@ -13,8 +13,18 @@ void move_snake(struct player_t * player, struct pair_t * food, int no_of_food);
 void next_game_state(struct gamedata_t * gamestate);
 void check_for_collision(struct gamedata_t * gamestate);
 int establish_connection(char server_ip_addr[], int port_no);
+void update_direction(struct player_t * player, char key);
 
-int establish_connection(char server_ip_addr[], int port_no){
+char up = 'w';
+char left = 'a';
+char down = 's';
+char right = 'd';
+char left_turn = 'j';
+char right_turn = 'k';
+
+typedef enum {UP = 0, LEFT, DOWN, RIGHT} directions;
+
+int establish_connection(char server_ip_addr[], int port_no, char* name){
     int clientSocket;
     char buffer[1024];
     struct sockaddr_in serverAddr;
@@ -47,7 +57,7 @@ int establish_connection(char server_ip_addr[], int port_no){
     /* Set all bits of the padding field to 0 */
     memset(serverAddr.sin_zero, '\0', sizeof
     serverAddr.sin_zero);
-
+    send  ( clientSocket, name, 150, 0 );
     /* Connect the socket to the server using the address*/
     addr_size = sizeof serverAddr;
     connect(clientSocket, (struct sockaddr *) &serverAddr, addr_size);
@@ -172,4 +182,59 @@ void move_snake(struct player_t * player, struct pair_t * food, int no_of_food){
         (snake->points[len]).first = (snake->points[len].second) = -1;
     }
     return;
+}
+
+void update_direction(struct player_t * player, char key){
+    struct snake_t *snake = &(player->snake);
+    int previousDirection = snake->dir;
+    if (key == right){
+        snake->dir = RIGHT;
+    }
+    else if (key == left){
+        snake->dir = LEFT;
+    }
+    else if (key == up){
+        snake->dir = UP;
+    }
+    else if (key == down){
+        snake->dir = DOWN;
+    }
+    else if (key == left_turn){
+        switch (previousDirection){
+            case LEFT:
+                snake->dir = DOWN;
+                break;
+
+            case RIGHT:
+                snake->dir = UP;
+                break;
+
+            case UP:
+                snake->dir = LEFT;
+                break;
+
+            case DOWN:
+                snake->dir = RIGHT;
+                break;
+        }
+    }
+    else if (key == right_turn){
+        switch (previousDirection){
+            case LEFT:
+                snake->dir = UP;
+                break;
+
+            case RIGHT:
+                snake->dir = DOWN;
+                break;
+
+            case UP:
+                snake->dir = RIGHT;
+                break;
+
+            case DOWN:
+                snake->dir = LEFT;
+                break;
+        }
+    }
 }

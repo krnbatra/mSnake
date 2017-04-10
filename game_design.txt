@@ -44,14 +44,14 @@ Modules required:-
 Functions required:-
 
 1.) Client -->
-    1.1) establish_connection(ip_addr:char[], port_no:int) - returns 1 if connection success else 0
+    1.1) establish_connection(ip_addr:char[], port_no:int) - player id, or -1 if it failed to make connection or all slots are filled
     1.2) get_pressed_key() - returns set_keys:char[] or return key:char
     1.3) send_move() - returns void
     1.4) receive_moves() - returns player_moves : struct moves_t[[]
     1.5) draw_game_state(gamestate : struct gamedata) - returns void
     1.6) check_for_collision(gamestate : struct gamedata) - returns void
     1.7) move_snake(player : struct player) - returns void
-    1.8) update_direction(player_moves:struct moves[]) : returns void
+    1.8) update_direction(player_move:struct move[]) : returns void
 
 2.) Server -->
     2.1) listen_for_player(next_free_id : int) - returns player:struct player
