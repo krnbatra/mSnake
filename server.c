@@ -6,53 +6,58 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <signal.h>
+#include "client_types.h"
 
-static int unique_id = 0;
 
-struct player_t * listen_for_player(int next_free_id);
+int listening_port_no;
+char * ip_address; // to be automated 
+int next_free_id;
+
+struct player_t * listen_for_player();
 
 struct player_t * listen_for_player(){ // this function should run for 1 minute (timer not included yet) and will accept the connection requests and assign then unique ids starting from 1 and then ask for their name at the client side and saves the name of the client in an array corresponding to the id. 
+    int serverSocket = 0, newSocket = 0;
+    struct sockaddr_in serverAddr;
+    struct sockaddr_storage serverStorage;
+    socklen_t addr_size;
+    serverSocket = socket(PF_INET, SOCK_STREAM, 0);
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(listening_port_no);
+    serverAddr.sin_addr.s_addr = inet_addr (ip_address);
+    memset ( serverAddr.sin_zero, '\0', sizeof (serverAddr.sin_zero) );
+    int yes=1;
+    if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1) {
+        perror("setsockopt");
+        exit(1);
+    }
+    bind(serverSocket,(struct sockaddr*) &serverAddr,sizeof(serverAddr));
+    if (listen( serverSocket, 1)) {
+        printf("Some problem in listen\n");
+        exit(2);
+    }
+    data_t player_data[MAX_PLAYERS];
+    while ( !listen ( serverSocket, 1 ) ){
+        addr_size = sizeof(serverStorage );
+        newSocket = accept(serverSocket,(struct sockaddr *)&serverStorage,&addr_size);
+        size_t nr = recv(newSocket, &(player_data[next_free_id]), sizeof(data_t), 0);
+        if (nr != sizeof(data_t)){
+            printf("Data not received properly\n");
+            exit(2);
+        }
+        printf("Client connected\n ip = %s\nport_no = %d\nname = %s\n", 
+                player_data[next_free_id].ipaddr, player_data[next_free_id].port_no, player_data[next_free_id].name);
+        send(newSocket, &next_free_id, sizeof(int), 0 );
+        next_free_id++;
+        close (newSocket);
+    }
+}
 
-	int serverSocket = 0, newSocket = 0;
-	char buffer[1024];
-	struct sockaddr_in serverAddr;
-	struct sockaddr_storage serverStorage;
-	socklen_t addr_size;
-	/*  Create the network socket.   */
-	serverSocket = socket(PF_INET, SOCK_STREAM, 0);
-	// Configure settings of the server address
-	/* Address family = Internet */
-	serverAddr.sin_family = AF_INET;
-	/* Set port number */
-	serverAddr.sin_port = htons(7891);
-	/* Set IP address to localhost */
-	char ip_addr[] = "172.17.46.179";
-	serverAddr.sin_addr.s_addr = inet_addr ( ip_addr );
-	/* Set all bits of the padding field to 0 */
-	memset ( serverAddr.sin_zero, '\0', sizeof (serverAddr.sin_zero) );
 
-	memset(buffer, '0', sizeof(buffer));
-	int yes=1;
-	if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1) {
-	perror("setsockopt");
-	exit(1);
-	}
-	/*---- Bind the address struct to the socket ----*/
-	bind ( serverSocket, ( struct sockaddr *) &serverAddr, sizeof ( serverAddr ) );
-	/* Listen on the socket, with 5 max connection requests queued */
-	if ( listen ( serverSocket, 5 ) ==0 )
-	printf ( " Listening \n " );
-	else
-	printf("More than limit. Error!!  \n");
+int main(){
+    listening_port_no = 8054;
+    ip_address = (char *) malloc(40*sizeof(char));
+    strcpy(ip_address, "172.17.49.75");
+    next_free_id = 1;
+    listen_for_player();
 
-	/* Accept call creates a new socket for the incoming connection */
-
-	while ( !listen ( serverSocket, 2 ) ){
-		addr_size = sizeof ( serverStorage );
-		newSocket = accept ( serverSocket, (struct sockaddr *) &serverStorage, &addr_size);
-		sprintf(buffer, "%d", ++unique_id);
-		send  ( newSocket, buffer, 150, 0 );
-		close ( newSocket );
-		sleep ( 1 );
-	}
 }

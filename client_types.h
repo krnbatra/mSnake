@@ -60,3 +60,17 @@ typedef struct gamedata_t{
     int no_of_food;
 } gamedata_t;
 
+
+typedef struct data_t{
+    char ipaddr[20];
+    int port_no;
+    char name[20];
+} data_t;
+
+
+typedef struct players_info{
+    int num_of_players;
+    data_t player_info[MAX_PLAYERS];
+    int assigned_id;
+} players_info;
+

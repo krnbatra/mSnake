@@ -12,7 +12,6 @@ struct player_t;
 void move_snake(struct player_t * player, struct pair_t * food, int no_of_food);
 void next_game_state(struct gamedata_t * gamestate);
 void check_for_collision(struct gamedata_t * gamestate);
-int establish_connection(char server_ip_addr[], int port_no, char* name);
 void update_direction(struct player_t * player, char key);
 
 char up = 'w';
@@ -22,10 +21,8 @@ char right = 'd';
 char left_turn = 'j';
 char right_turn = 'k';
 
-
-int establish_connection(char server_ip_addr[], int port_no,int udp_port_no, char* name){
+players_info*  establish_connection(char server_ip_addr[], int port_no, data_t * data){
     int clientSocket;
-    char buffer[1024];
     struct sockaddr_in serverAddr;
     socklen_t addr_size;
     clientSocket = socket(PF_INET, SOCK_STREAM, 0);
@@ -37,9 +34,16 @@ int establish_connection(char server_ip_addr[], int port_no,int udp_port_no, cha
     addr_size = sizeof serverAddr;
     connect(clientSocket, (struct sockaddr *) &serverAddr, addr_size);
     /* Read the message from the server into the buffer */
-    send(clientSocket, name, strlen(name)+1, 0);
-    recv(clientSocket, buffer, 1024, 0);
-    return atoi(buffer);
+    send(clientSocket, data, sizeof(data_t),0);
+    players_info * info_req = (players_info*)malloc(sizeof(players_info));
+    size_t nr = recv(clientSocket, info_req, sizeof(players_info), 0);
+    printf("Receving no of bytes = %u\n", nr);
+    printf("Received ID : %d\n", *((int*)info_req));
+    if (nr != sizeof(players_info)){
+        printf("Problem in receving players information\n");
+        exit(2);
+    }
+    return info_req;
 }
 
 void check_for_collision(struct gamedata_t * gamestate){
@@ -212,4 +216,13 @@ void update_direction(struct player_t * player, char key){
                 break;
         }
     }
+}
+
+int main(){
+    data_t var;
+    strcpy(var.ipaddr, "172.17.49.75\0");
+    var.port_no = 1009;
+    strcpy(var.name, "modi");
+    establish_connection("172.17.49.75", 8054, &var);
+    return 0;
 }
