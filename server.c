@@ -1,12 +1,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include <string.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <signal.h>
+#include <pthread.h>
 #include "client_types.h"
 
 
@@ -14,14 +16,63 @@ int listening_port_no;
 char * ip_address; // to be automated 
 int next_free_id;
 
-struct player_t * listen_for_player();
 
-int wait = 1;
+int wait_min = 1;
 
+players_info info;
+
+void alarm_handler(int signal){
+    if (signal == SIGALRM){
+        wait_min = 0;
+        printf("GAME STARTS IN 5 SEC\n");
+    }
+    else 
+        fprintf(stderr, "Called by some by other interrupt");
+}
+
+void custom_signal(int signo, void (*func)(int)){
+    struct sigaction * action = (struct sigaction*)malloc(sizeof(struct sigaction));
+    action->sa_handler = func;
+    sigemptyset(&(action->sa_mask));
+    action->sa_flags = 0;
+    sigaction(signo, action, NULL);
+}
+
+void start_timer(int sec){
+    static struct itimerval tim;
+    tim.it_value.tv_sec = sec;
+    tim.it_value.tv_usec = 0;
+    tim.it_interval.tv_sec = 0;
+    tim.it_interval.tv_usec = 0;
+    setitimer(ITIMER_REAL, &tim, NULL);
+}
+
+void* work_pthread(void * dataptr){
+    pair_t * pa = (pair_t *) dataptr;
+    int newSocket = pa->first;
+    int free_id = pa->second;
+    size_t nr = recv(newSocket, &(info.player_info[free_id]), sizeof(data_t), 0);
+    if (nr != sizeof(data_t)){
+        printf("Data not received properly\n");
+        exit(2);
+    }
+    printf("Client connected\n ip = %s\nport_no = %d\nname = %s\n", 
+                info.player_info[free_id].ipaddr, info.player_info[free_id].port_no, info.player_info[free_id].name);
+    while (wait_min) {
+        printf("Hi I am %d, waiting... :(\n", free_id);
+        sleep(2);
+    }
+    size_t ns = send(newSocket, &info, sizeof(players_info), 0);
+    if (ns != sizeof(players_info)){
+        perror("Failed to send player_information");
+    }
+    close(newSocket);
+    pthread_exit(NULL);
+}
 
 
 //this function should run for 1 minute (timer not included yet) and will accept the connection requests and assign then unique ids starting from 1 and then ask for their name at the client side and saves the name of the client in an array corresponding to the id. 
-struct player_t * listen_for_player(){
+void listen_for_players(){
     int serverSocket = 0, newSocket = 0;
     struct sockaddr_in serverAddr;
     struct sockaddr_storage serverStorage;
@@ -36,39 +87,39 @@ struct player_t * listen_for_player(){
         perror("setsockopt");
         exit(1);
     }
-    bind(serverSocket,(struct sockaddr*) &serverAddr,sizeof(serverAddr));
+    if (bind(serverSocket,(struct sockaddr*) &serverAddr,sizeof(serverAddr)) == -1){
+        perror("Problem in binding");
+        exit(0);
+    }
     if (listen( serverSocket, 1)) {
         printf("Some problem in listen\n");
         exit(2);
     }
     data_t player_data[MAX_PLAYERS];
-    if (listen(serverSocket,1)){
-        perror("Failed on listen call : ");
-        exit(2);
-    }
     int cnt = MAX_PLAYERS;
-    while (cnt--){
+    while (cnt-- && wait_min){
         addr_size = sizeof(serverStorage);
         newSocket = accept(serverSocket,(struct sockaddr *)&serverStorage,&addr_size);
-        size_t nr = recv(newSocket, &(player_data[next_free_id]), sizeof(data_t), 0);
-        if (nr != sizeof(data_t)){
-            printf("Data not received properly\n");
-            exit(2);
+        if (newSocket != -1){
+            pair_t *temp = (pair_t*)malloc(sizeof(pair_t));
+            temp->first = newSocket;
+            temp->second = next_free_id;
+            pthread_t thread_no;
+            pthread_create(&thread_no, NULL, work_pthread,temp);
         }
-        printf("Client connected\n ip = %s\nport_no = %d\nname = %s\n", 
-                player_data[next_free_id].ipaddr, player_data[next_free_id].port_no, player_data[next_free_id].name);
-        send(newSocket, &next_free_id, sizeof(int), 0 );
         next_free_id++;
     }
-    return NULL;
+    close(serverSocket);
 }
 
 
 int main(){
-    listening_port_no = 8054;
+    custom_signal(SIGALRM, alarm_handler);
+    start_timer(5);
     ip_address = (char *) malloc(40*sizeof(char));
     strcpy(ip_address, "172.17.49.75");
+    listening_port_no = 8054;
     next_free_id = 0;
-    listen_for_player();
+    listen_for_players();
     return 0;
 }

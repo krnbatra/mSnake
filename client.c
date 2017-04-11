@@ -33,7 +33,7 @@ players_info*  establish_connection(char server_ip_addr[], int port_no, data_t *
     /* Connect the socket to the server using the address*/
     addr_size = sizeof serverAddr;
     if (connect(clientSocket, (struct sockaddr *) &serverAddr, addr_size) == -1){
-        perror("Failed to connect to the server : ");
+        perror("Failed to connect to the server");
         exit(2);
     }
     /* Read the message from the server into the buffer */
@@ -41,19 +41,21 @@ players_info*  establish_connection(char server_ip_addr[], int port_no, data_t *
     players_info * info_req = (players_info*)malloc(sizeof(players_info));
     size_t nr = recv(clientSocket, info_req, sizeof(players_info), 0);
     if (nr == -1){
-        perror("Error in receiving data from server : ");
+        perror("Error in receiving data from server");
         exit(2);
     }
     nr = recv(clientSocket, info_req, sizeof(players_info), 0);
     if (nr == -1){
-        perror("Error in receiving data from server : ");
+        perror("Error in receiving data from server");
         exit(2);
     }
-    printf("Received ID : %d\n", *((int*)info_req));
+    printf("Received number of bytes : %lu\n", nr);
+    printf("Size of players_info struct : %lu\n", sizeof(players_info));
     if (nr != sizeof(players_info)){
         printf("Problem in receving players information\n");
         exit(2);
     }
+    else printf("Data received correctly!\n");
     return info_req;
 }
 
@@ -229,7 +231,7 @@ void update_direction(struct player_t * player, char key){
 
 int main(){
     data_t var;
-    strcpy(var.ipaddr, "172.17.49.75\0");
+    strcpy(var.ipaddr, "172.17.49.75");
     var.port_no = 1009;
     strcpy(var.name, "modi");
     establish_connection("172.17.49.75", 8054, &var);

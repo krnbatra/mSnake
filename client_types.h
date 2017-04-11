@@ -11,9 +11,9 @@ typedef int color_t;
 typedef char* ipaddr_t;
 
 
-struct pair_t{
+typedef struct pair_t{
     int first, second;
-};
+} pair_t;
 
 typedef enum direction_t{
     UP = 0, DOWN, LEFT, RIGHT
