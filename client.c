@@ -32,12 +32,23 @@ players_info*  establish_connection(char server_ip_addr[], int port_no, data_t *
     memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);
     /* Connect the socket to the server using the address*/
     addr_size = sizeof serverAddr;
-    connect(clientSocket, (struct sockaddr *) &serverAddr, addr_size);
+    if (connect(clientSocket, (struct sockaddr *) &serverAddr, addr_size) == -1){
+        perror("Failed to connect to the server : ");
+        exit(2);
+    }
     /* Read the message from the server into the buffer */
     send(clientSocket, data, sizeof(data_t),0);
     players_info * info_req = (players_info*)malloc(sizeof(players_info));
     size_t nr = recv(clientSocket, info_req, sizeof(players_info), 0);
-    printf("Receving no of bytes = %u\n", nr);
+    if (nr == -1){
+        perror("Error in receiving data from server : ");
+        exit(2);
+    }
+    nr = recv(clientSocket, info_req, sizeof(players_info), 0);
+    if (nr == -1){
+        perror("Error in receiving data from server : ");
+        exit(2);
+    }
     printf("Received ID : %d\n", *((int*)info_req));
     if (nr != sizeof(players_info)){
         printf("Problem in receving players information\n");
@@ -47,66 +58,64 @@ players_info*  establish_connection(char server_ip_addr[], int port_no, data_t *
 }
 
 void check_for_collision(struct gamedata_t * gamestate){
-	int n = gamestate->no_of_initial_players;
-	int i = 0, j = 0;
-	for (i = 0;i < n; i++){
-		struct player_t *player = &(gamestate->players[i]);
-		struct snake_t *snake = &(player->snake);
-		int len = snake->length;
-		int headx = (snake->points[len-1]).first, heady = (snake->points[len-1]).second;
-		if (!player->alive)	continue;
-		// collision against walls
-		if (headx == 0 || headx == MAXROW-1 || heady == 0 || heady == MAXCOL-1){
-			player->alive = 0;
-			gamestate->no_of_live_players--;
-			continue;
-		}
-		// collision against obstacles
-		for (j = 0;j < gamestate->no_of_food; j++){
-			struct pair_t *obstacle = &(gamestate->obstacles[j]);
-			if (obstacle->first == headx && obstacle->second == heady){
-				player->alive = 0;
-				gamestate->no_of_live_players--;
-				break;
-			}
-		}
-		if (!player->alive)	continue;
-		// self collision
-		for (j = 0;j < (len-1); j++){
-
-			if (headx == (snake->points[j]).first && heady == (snake->points[j]).second ){
-				player->alive = 0;
-				gamestate->no_of_live_players--;
-				break;
-			}
-		}
-		if (!player->alive)	continue;
-		// collision against others
-		for (j = 0;j < n; j++){
-			if (j == i)	continue;
-			struct player_t *player2 = &(gamestate->players[i]);
-			struct snake_t *snake2 = &(player2->snake);
-			int len2 = snake2->length;
-			if (!player->alive)		break;
-			if (!player2->alive)	continue;
-			int headx2 = (snake2->points[len2-1]).first, heady2 = (snake2->points[len2-1]).second;
-			if (headx == headx2 && heady == heady2){
-				player->alive = 0;
-				player2->alive = 0;
-				gamestate->no_of_live_players--;
-				continue;
-			}
-			int k = 0;
-			for(k = 0;k < (len2-1); k++){
-				if (headx == (snake2->points[k]).first && heady == (snake2->points[k]).second){
-					player->alive = 0;
-					gamestate->no_of_live_players--;
-					break;
-				}
-			}
-		}
-	}
-
+    int n = gamestate->no_of_initial_players;
+    int i = 0, j = 0;
+    for (i = 0;i < n; i++){
+        struct player_t *player = &(gamestate->players[i]);
+        struct snake_t *snake = &(player->snake);
+        int len = snake->length;
+        int headx = (snake->points[len-1]).first, heady = (snake->points[len-1]).second;
+        if (!player->alive)	continue;
+        // collision against walls
+        if (headx == 0 || headx == MAXROW-1 || heady == 0 || heady == MAXCOL-1){
+            player->alive = 0;
+            gamestate->no_of_live_players--;
+            continue;
+        }
+        // collision against obstacles
+        for (j = 0;j < gamestate->no_of_food; j++){
+            struct pair_t *obstacle = &(gamestate->obstacles[j]);
+            if (obstacle->first == headx && obstacle->second == heady){
+                player->alive = 0;
+                gamestate->no_of_live_players--;
+                break;
+            }
+        }
+        if (!player->alive)	continue;
+        // self collision
+        for (j = 0;j < (len-1); j++){
+            if (headx == (snake->points[j]).first && heady == (snake->points[j]).second ){
+                player->alive = 0;
+                gamestate->no_of_live_players--;
+                break;
+            }
+        }
+        if (!player->alive)	continue;
+        // collision against others
+        for (j = 0;j < n; j++){
+            if (j == i)	continue;
+            struct player_t *player2 = &(gamestate->players[i]);
+            struct snake_t *snake2 = &(player2->snake);
+            int len2 = snake2->length;
+            if (!player->alive)		break;
+            if (!player2->alive)	continue;
+            int headx2 = (snake2->points[len2-1]).first, heady2 = (snake2->points[len2-1]).second;
+            if (headx == headx2 && heady == heady2){
+                player->alive = 0;
+                player2->alive = 0;
+                gamestate->no_of_live_players--;
+                continue;
+            }
+            int k = 0;
+            for(k = 0;k < (len2-1); k++){
+                if (headx == (snake2->points[k]).first && heady == (snake2->points[k]).second){
+                    player->alive = 0;
+                    gamestate->no_of_live_players--;
+                    break;
+                }
+            }
+        }
+    }
 }
 
 void next_game_state(struct gamedata_t * gamestate){
