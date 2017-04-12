@@ -56,6 +56,27 @@ players_info*  establish_connection(char server_ip_addr[], int port_no, data_t *
     return info_req;
 }
 
+int socket_no;
+// client send move
+void send_move(move_t* player_move, int portno, char* server_ip_addr){
+    struct sockaddr_in to_be_sent;
+    to_be_sent.sin_family = AF_INET;
+    to_be_sent.sin_port = htons(portno);
+    to_be_sent.sin_addr.s_addr = inet_addr(server_ip_addr);
+    if(sendto(socket_no, player_move, sizeof(move_t), 0, (struct sockaddr*)&to_be_sent, sizeof(to_be_sent)) == 0){
+        perror("ERROR IN SENDING");
+    }
+}
+
+// client receive
+move_t* receive_moves(int portno, char* server_ip_addr){
+    move_t* returnMoves = (move_t*)malloc(sizeof(move_t)*MAX_PLAYERS);
+    if(recvfrom(socket_no, returnMoves, sizeof(move_t)*MAX_PLAYERS, 0, NULL, 0) == -1){
+        perror("ERROR IN RECEIVING");
+    }
+    return returnMoves;
+}
+
 void check_for_collision(struct gamedata_t * gamestate){
     int n = gamestate->no_of_initial_players;
     int i = 0, j = 0;
@@ -228,9 +249,17 @@ void update_direction(struct player_t * player, char key){
 
 int main(){
     data_t var;
-    strcpy(var.ipaddr, "172.17.49.75");
+    strcpy(var.ipaddr, "127.0.0.1");
     var.port_no = 1009;
     strcpy(var.name, "modi");
-    establish_connection("172.17.49.75", 8054, &var);
+    establish_connection("127.0.0.1", 8054, &var);
+    socket_no = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    struct sockaddr_in udp_bind;
+    udp_bind.sin_family = AF_INET;
+    udp_bind.sin_port = 9001;
+    udp_bind.sin_addr.s_addr = inet_addr(INADDR_ANY);
+    if ( bind(socket_no, (struct sockaddr*) &udp_bind, sizeof(udp_bind)) == -1){
+        perror("Failed to bind");
+    }
     return 0;
 }

@@ -116,14 +116,43 @@ void listen_for_players(){
     close(serverSocket);
 }
 
+int socket_no;
+void send_game_moves(move_t* player_moves){
+    struct sockaddr_in to_be_sent;
+    to_be_sent.sin_family = AF_INET;
+    for(int i = 0;i < MAX_PLAYERS; i++){
+        to_be_sent.sin_port = htons(info.player_info[i].port_no);
+        to_be_sent.sin_addr.s_addr = inet_addr(info.player_info[i].ipaddr);
+        if(sendto(socket_no, player_moves, sizeof(move_t)*MAX_PLAYERS, 0, (struct sockaddr*)&to_be_sent, sizeof(to_be_sent)) == -1){
+            perror("ERROR IN SENDING");
+        }
+    }
+}
+
+// server receive
+move_t* receive_move(){
+    move_t* returnMove = (move_t*)malloc(sizeof(move_t));
+    if(recvfrom(socket_no, returnMove, sizeof(move_t), 0, NULL, 0) == -1){
+        perror("ERROR IN RECEIVING");
+    }
+    return returnMove;
+}
 
 int main(){
     custom_signal(SIGALRM, alarm_handler);
     start_timer(10);
     ip_address = (char *) malloc(40*sizeof(char));
-    strcpy(ip_address, "172.17.49.75");
+    strcpy(ip_address, "127.0.0.1");
     listening_port_no = 8054;
     next_free_id = 0;
     listen_for_players();
+    socket_no = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    struct sockaddr_in udp_bind;
+    udp_bind.sin_family = AF_INET;
+    udp_bind.sin_port = 9001;
+    udp_bind.sin_addr.s_addr = inet_addr(INADDR_ANY);
+    if ( bind(socket_no, (struct sockaddr*) &udp_bind, sizeof(udp_bind)) == -1){
+        perror("Failed to bind");
+    }
     return 0;
 }
