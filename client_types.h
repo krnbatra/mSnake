@@ -71,5 +71,6 @@ typedef struct data_t{
 typedef struct players_info{
     int num_of_players;
     data_t player_info[MAX_PLAYERS];
+    int assigned_id;
 } players_info;
 

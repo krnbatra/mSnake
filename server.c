@@ -21,12 +21,30 @@ int wait_min = 1;
 
 players_info info;
 
-void* wait_pthread(void * dataptr){
-    int sec = *((int*)dataptr);
-    sleep(sec);
-    wait_min = 0;
-    printf("GAME STARTS IN 5 SEC\n");
-    pthread_exit(NULL);
+void alarm_handler(int signal){
+    if (signal == SIGALRM){
+        wait_min = 0;
+        printf("GAME STARTS IN 5 SEC\n");
+    }
+    else 
+        fprintf(stderr, "Called by some by other interrupt");
+}
+
+void custom_signal(int signo, void (*func)(int)){
+    struct sigaction * action = (struct sigaction*)malloc(sizeof(struct sigaction));
+    action->sa_handler = func;
+    sigemptyset(&(action->sa_mask));
+    action->sa_flags = 0;
+    sigaction(signo, action, NULL);
+}
+
+void start_timer(int sec){
+    static struct itimerval tim;
+    tim.it_value.tv_sec = sec;
+    tim.it_value.tv_usec = 0;
+    tim.it_interval.tv_sec = 0;
+    tim.it_interval.tv_usec = 0;
+    setitimer(ITIMER_REAL, &tim, NULL);
 }
 
 void* work_pthread(void * dataptr){
@@ -44,19 +62,14 @@ void* work_pthread(void * dataptr){
         printf("Hi I am %d, waiting... :(\n", free_id);
         sleep(2);
     }
-    printf("AFTER WAIT_MIN\n");
-    int i;
-    //for (i=0; i<next_free_id; i++){
-        //printf("PLAYER ID : %d, ip = %s\nport_no = %d\nname = %s\n", i, 
-                //info.player_info[i].ipaddr, info.player_info[i].port_no, info.player_info[i].name);
-    //}
     size_t ns = send(newSocket, &info, sizeof(players_info), 0);
     if (ns != sizeof(players_info)){
-        perror("Failed to send player_information : ");
+        perror("Failed to send player_information");
     }
     close(newSocket);
     pthread_exit(NULL);
 }
+
 
 
 //this function should run for 1 minute (timer not included yet) and will accept the connection requests and assign then unique ids starting from 1 and then ask for their name at the client side and saves the name of the client in an array corresponding to the id. 
@@ -87,29 +100,26 @@ void listen_for_players(){
     int cnt = MAX_PLAYERS;
     pthread_t tid[MAX_PLAYERS];
     int i;
-    for (i=0;i<MAX_PLAYERS && wait_min; i++){
+    for (i = 0; i < MAX_PLAYERS && wait_min; i++){
         addr_size = sizeof(serverStorage);
         newSocket = accept(serverSocket,(struct sockaddr *)&serverStorage,&addr_size);
         if (newSocket != -1){
             pair_t *temp = (pair_t*)malloc(sizeof(pair_t));
             temp->first = newSocket;
             temp->second = next_free_id;
-            pthread_create(&tid[i], NULL , work_pthread,temp);
+            pthread_create(&tid[i], NULL, work_pthread,temp);
             next_free_id++;
         }
     }
-    for (i=0; i < next_free_id; i++){
+    for (i = 0; i < next_free_id; i++)
         pthread_join(tid[i], NULL);
-    }
-
     close(serverSocket);
 }
 
 
 int main(){
-    pthread_t tid;
-    int sec = 10;
-    pthread_create(&tid, NULL, wait_pthread, &sec);
+    custom_signal(SIGALRM, alarm_handler);
+    start_timer(10);
     ip_address = (char *) malloc(40*sizeof(char));
     strcpy(ip_address, "172.17.49.75");
     listening_port_no = 8054;
