@@ -44,11 +44,6 @@ players_info*  establish_connection(char server_ip_addr[], int port_no, data_t *
         perror("Error in receiving data from server");
         exit(2);
     }
-    nr = recv(clientSocket, info_req, sizeof(players_info), 0);
-    if (nr == -1){
-        perror("Error in receiving data from server");
-        exit(2);
-    }
     printf("Received number of bytes : %lu\n", nr);
     printf("Size of players_info struct : %lu\n", sizeof(players_info));
     if (nr != sizeof(players_info)){
