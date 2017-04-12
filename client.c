@@ -44,13 +44,15 @@ players_info*  establish_connection(char server_ip_addr[], int port_no, data_t *
         perror("Error in receiving data from server");
         exit(2);
     }
-    printf("Received number of bytes : %lu\n", nr);
-    printf("Size of players_info struct : %lu\n", sizeof(players_info));
     if (nr != sizeof(players_info)){
         printf("Problem in receving players information\n");
         exit(2);
     }
     else printf("Data received correctly!\n");
+    int i;
+    for (i = 0; i < info_req->num_of_players; i++){
+        printf("%d --> %s %s %d\n", i, info_req->player_info[i].ipaddr, info_req->player_info[i].name, info_req->player_info[i].port_no);
+    }
     return info_req;
 }
 

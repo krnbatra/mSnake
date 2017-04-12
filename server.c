@@ -25,6 +25,7 @@ void alarm_handler(int signal){
     if (signal == SIGALRM){
         wait_min = 0;
         printf("GAME STARTS IN 5 SEC\n");
+        info.num_of_players = next_free_id;
     }
     else 
         fprintf(stderr, "Called by some by other interrupt");
@@ -56,11 +57,10 @@ void* work_pthread(void * dataptr){
         printf("Data not received properly\n");
         exit(2);
     }
-    printf("Client connected\n ip = %s\nport_no = %d\nname = %s\n", 
+    printf("Client connected --> ip = %s | port_no = %d | name = %s\n", 
                 info.player_info[free_id].ipaddr, info.player_info[free_id].port_no, info.player_info[free_id].name);
     while (wait_min) {
-        printf("Hi I am %d, waiting... :(\n", free_id);
-        sleep(2);
+        sleep(1);
     }
     size_t ns = send(newSocket, &info, sizeof(players_info), 0);
     if (ns != sizeof(players_info)){
