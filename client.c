@@ -5,7 +5,103 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include "client_types.h"
+#define HEIGHT 100
+#define WIDTH 140
+#include <sys/types.h> //for WEXITSTATUS
+#include <sys/wait.h> //for WEXITSTATUS
+#include <signal.h> //for signal disposition
+#include "conio.h"
+/*
+code from draw_game_state
+*/
+void draw_snake(struct snake_t *snake){
+    int len = snake->length;
+    int i;
+    struct pair_t * arr = snake->points;
+    textbackground(snake->color);
+    for (i=0;i<len-1;i++){
+        gotoxy(arr[i].first, arr[i].second);
+        puts(" ");
+    }
+    gotoxy(arr[len-1].first,arr[len-1].second);
+    textbackground(RED);
+    puts(" ");
+}
 
+void draw_objects(struct pair_t * obj, int num){
+    int i = 0;
+    textbackground(CYAN);
+    for (; i < num; i++){
+        if (obj[i].first == -1) continue; //consumed
+        gotoxy(obj[i].first, obj[i].second);
+        puts("@");
+    }
+}
+
+void draw_game_state(struct gamedata_t * game){
+    clrscr();
+    int width = game->width, height = game->height;
+    int i = 0, j = 0;
+    textcolor(BLUE);
+    textbackground(CYAN);
+    for (j = 1; j <= width; j++){
+        gotoxy(1, j);
+        puts("+");
+        gotoxy(height,j);
+        puts("+");
+    }
+    for (i = 1; i <= height; i++){
+        gotoxy(i, 1);
+        puts("+");
+        gotoxy(i,width);
+        puts("+");
+    }
+    textbackground(LIGHTGREY);
+    for (i = 2; i < height; i++){
+        for (j = 2; j < width; j++){
+            gotoxy(i,j);
+            puts(" ");
+        }
+    }
+    int num = game->no_of_initial_players;
+    for (i = 0; i < num; i++){
+        if (game->players[i].alive){
+            draw_snake(&(game->players[i].snake));
+        }
+    }
+    draw_objects(game->food, game->no_of_food);
+    draw_objects(game->obstacles, game->no_of_obstacles);
+    textattr(RESETATTR);
+}
+int initialize_gamestate(int no_of_players,gamedata_t* gamestate,player_t* players){
+    if (WEXITSTATUS(system("stty cbreak -echo stop u"))){
+        fprintf(stderr, "Check if stty missing?\n");
+        return 1;
+    }
+    for(int i=0;i<no_of_players;i++)
+    {
+        players[i].snake.length = 2;
+        //clrscr();
+        int width = 50, height = 50;
+        int j;
+        for (j = 0; j < players[i].snake.length ; j++){
+            (players[i].snake.points)[j].second = j+1;
+            players[i].snake.points[j].first = 5*i+1;
+        }
+        players[i].snake.color = 0x4;
+        draw_snake(&players[i].snake);
+        clrscr();
+        
+    }
+    if (WEXITSTATUS(system("stty sane")==0)){
+            fprintf(stderr, "Check if stty missing?\n");
+            return 1;
+        }
+    return 0;
+}
+
+
+// draw_game_state ends
 struct gamedata_t;
 struct pair_t;
 struct player_t;
@@ -21,6 +117,27 @@ char right = 'd';
 char left_turn = 'j';
 char right_turn = 'k';
 
+
+void display_leaderboard(player_t * players,int no_of_players)
+{
+    for(int i=0;i<no_of_players;i++)
+    {
+        for(int j=0;j<no_of_players-1;j++)
+        {
+            if(players[j].score<players[j+1].score)
+            {
+                player_t temp=players[j];
+                players[j]=players[j+1];
+                players[j+1]=temp;
+            }
+        }
+    }
+    for(int i=0;i<no_of_players;i++)
+    {
+        printf("%d %s %d\n",i+1,players[i].name,players[i].score);
+    }
+
+}
 players_info*  establish_connection(char server_ip_addr[], int port_no, data_t * data){
     int clientSocket;
     struct sockaddr_in serverAddr;
@@ -247,12 +364,29 @@ void update_direction(struct player_t * player, char key){
     }
 }
 
+void running_state(gamedata_t* gamedata)
+{
+    draw_game_state(gamedata);
+ 
+}
+/*
+initialize_arena
+
+in loop
+
+drawgamestate
+getchar
+send_move
+receive_moves
+next_game_state
+
+*/
 int main(){
     data_t var;
     strcpy(var.ipaddr, "127.0.0.1");
     var.port_no = 1009;
     strcpy(var.name, "modi");
-    establish_connection("127.0.0.1", 8054, &var);
+    players_info* player_info_pointer=establish_connection("127.0.0.1", 8054, &var);
     socket_no = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     struct sockaddr_in udp_bind;
     udp_bind.sin_family = AF_INET;
@@ -261,5 +395,9 @@ int main(){
     if ( bind(socket_no, (struct sockaddr*) &udp_bind, sizeof(udp_bind)) == -1){
         perror("Failed to bind");
     }
+
+    gamedata_t* gamedata_var=NULL;
+    //initialize_gamestate(MAX_PLAYERS,gamedata_var,player_info_pointer);
+
     return 0;
 }
