@@ -384,10 +384,10 @@ int main(){
     socket_no = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     struct sockaddr_in udp_bind;
     udp_bind.sin_family = AF_INET;
-    udp_bind.sin_port = 9001;
+    udp_bind.sin_port = htons(9001);
     udp_bind.sin_addr.s_addr = inet_addr(INADDR_ANY);
     if ( bind(socket_no, (struct sockaddr*) &udp_bind, sizeof(udp_bind)) == -1){
-        perror("Failed to bind");
+        perror("Failed to bind\n");
     }
     gamedata_t* gamedata_var = NULL;
     //initialize_gamestate(MAX_PLAYERS,gamedata_var,player_info_pointer);

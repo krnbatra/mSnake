@@ -15,11 +15,10 @@
 int listening_port_no;
 char * ip_address; // to be automated 
 int next_free_id;
-
-
 int wait_min = 1;
-
+int over;
 players_info info;
+
 
 void alarm_handler(int signal){
     if (signal == SIGALRM){
@@ -31,6 +30,11 @@ void alarm_handler(int signal){
         fprintf(stderr, "Called by some by other interrupt");
 }
 
+
+void change_over(int signo){
+    over = 0;
+}
+
 void custom_signal(int signo, void (*func)(int)){
     struct sigaction * action = (struct sigaction*)malloc(sizeof(struct sigaction));
     action->sa_handler = func;
@@ -39,10 +43,10 @@ void custom_signal(int signo, void (*func)(int)){
     sigaction(signo, action, NULL);
 }
 
-void start_timer(int sec){
+void start_timer(int sec, int usec){
     static struct itimerval tim;
     tim.it_value.tv_sec = sec;
-    tim.it_value.tv_usec = 0;
+    tim.it_value.tv_usec = usec;
     tim.it_interval.tv_sec = 0;
     tim.it_interval.tv_usec = 0;
     setitimer(ITIMER_REAL, &tim, NULL);
@@ -69,8 +73,6 @@ void* work_pthread(void * dataptr){
     close(newSocket);
     pthread_exit(NULL);
 }
-
-
 
 //this function should run for 1 minute (timer not included yet) and will accept the connection requests and assign then unique ids starting from 1 and then ask for their name at the client side and saves the name of the client in an array corresponding to the id. 
 void listen_for_players(){
@@ -130,17 +132,38 @@ void send_game_moves(move_t* player_moves){
 }
 
 // server receive
-move_t* receive_move(){
-    move_t* returnMove = (move_t*)malloc(sizeof(move_t));
-    if(recvfrom(socket_no, returnMove, sizeof(move_t), 0, NULL, 0) == -1){
-        perror("ERROR IN RECEIVING");
+move_t* receive_moves(){
+    move_t* returnMove = (move_t*)malloc(sizeof(move_t)*MAX_PLAYERS);
+    memset(returnMove, '\0', sizeof(move_t)*MAX_PLAYERS);
+    move_t single_data;
+    over = 1;
+    start_timer(0, 500000);
+    while (!over){
+        if(recvfrom(socket_no, &single_data, sizeof(move_t), 0, NULL, 0) == -1)
+            perror("ERROR IN RECEIVING");
+        else {
+            int id = single_data.player_id;
+            returnMove[id] = single_data;
+        }
     }
     return returnMove;
 }
 
+//periodic work
+//receive moves
+//send moves
+
+void perioidic_work(){
+    while (1){
+        sleep(0.01);
+        move_t *arr = receive_moves();
+        send_game_moves(arr);
+    }
+}
+
 int main(){
     custom_signal(SIGALRM, alarm_handler);
-    start_timer(10);
+    start_timer(10, 0);
     ip_address = (char *) malloc(40*sizeof(char));
     strcpy(ip_address, "127.0.0.1");
     listening_port_no = 8054;
@@ -149,10 +172,13 @@ int main(){
     socket_no = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     struct sockaddr_in udp_bind;
     udp_bind.sin_family = AF_INET;
-    udp_bind.sin_port = 9001;
+    udp_bind.sin_port = htons(9001);
     udp_bind.sin_addr.s_addr = inet_addr(INADDR_ANY);
     if ( bind(socket_no, (struct sockaddr*) &udp_bind, sizeof(udp_bind)) == -1){
-        perror("Failed to bind");
+        perror("Failed to bind\n");
     }
+    printf("HERERE\n");
+    custom_signal(SIGALRM, change_over);
+    perioidic_work();
     return 0;
 }
