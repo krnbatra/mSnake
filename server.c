@@ -126,7 +126,7 @@ void send_game_moves(move_t* player_moves){
         to_be_sent.sin_port = htons(info.player_info[i].port_no);
         to_be_sent.sin_addr.s_addr = inet_addr(info.player_info[i].ipaddr);
         if(sendto(socket_no, player_moves, sizeof(move_t)*MAX_PLAYERS, 0, (struct sockaddr*)&to_be_sent, sizeof(to_be_sent)) == -1){
-            perror("ERROR IN SENDING");
+            perror("ERROR IN SENDING\n");
         }
     }
 }
@@ -140,7 +140,7 @@ move_t* receive_moves(){
     start_timer(0, 500000);
     while (!over){
         if(recvfrom(socket_no, &single_data, sizeof(move_t), 0, NULL, 0) == -1)
-            perror("ERROR IN RECEIVING");
+            perror("ERROR IN RECEIVING\n");
         else {
             int id = single_data.player_id;
             returnMove[id] = single_data;
@@ -173,7 +173,7 @@ int main(){
     struct sockaddr_in udp_bind;
     udp_bind.sin_family = AF_INET;
     udp_bind.sin_port = htons(9001);
-    udp_bind.sin_addr.s_addr = inet_addr(INADDR_ANY);
+    udp_bind.sin_addr.s_addr = inet_addr(ip_address);
     if ( bind(socket_no, (struct sockaddr*) &udp_bind, sizeof(udp_bind)) == -1){
         perror("Failed to bind\n");
     }
