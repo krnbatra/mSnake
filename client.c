@@ -15,7 +15,7 @@
 void draw_snake(snake_t *snake);
 void draw_objects(pair_t * obj, int num);
 void draw_game_state(gamedata_t * game);
-int  initialize_gamestate(gamedata_t* game, player_t* players);
+// int  initialize_gamestate(gamedata_t* game, player_t* players);
 void display_leaderboard(player_t * players, int no_of_players);
 players_info*  establish_connection(char server_ip_addr[], int port_no, data_t * data);
 void send_move(move_t* player_move, int portno, char* server_ip_addr);
@@ -38,15 +38,17 @@ struct sockaddr_in udp_bind;
 void draw_snake(snake_t *snake){
     int len = snake->length;
     int i;
-    struct pair_t * arr = snake->points;
-    textbackground(snake->color);
-    for (i = 0;i < len-1; i++){
+    struct pair_t* arr = snake->points;
+    textbackground (snake->color);
+    for (i = 0; i < len-1; i++){
         gotoxy(arr[i].first, arr[i].second);
-        puts(" ");
+        printf(" ");
     }
-    gotoxy(arr[len-1].first,arr[len-1].second);
+    textattr(RESETATTR);
+    gotoxy(arr[len-1].first, arr[len-1].second);
     textbackground(RED);
     puts(" ");
+    textattr(RESETATTR);
 }
 
 void draw_objects(pair_t * obj, int num){
@@ -63,55 +65,71 @@ void draw_game_state(gamedata_t * game){
     clrscr();
     int width = game->width, height = game->height;
     int i = 0, j = 0;
-    textcolor(BLUE);
-    textbackground(CYAN);
-    for (j = 1; j <= width; j++){
-        gotoxy(1, j);
-        puts("+");
-        gotoxy(height,j);
-        puts("+");
-    }
-    for (i = 1; i <= height; i++){
-        gotoxy(i, 1);
-        puts("+");
-        gotoxy(i,width);
-        puts("+");
-    }
-    textbackground(LIGHTGREY);
-    for (i = 2; i < height; i++){
-        for (j = 2; j < width; j++){
-            gotoxy(i,j);
-            puts(" ");
-        }
-    }
+    gotoxy(1, 1);
+	textcolor (BLUE);
+    textbackground (CYAN);
+	for (i = 0; i < width+2; i++){
+		if (i == 0 || i == width+1)
+			printf ("+");
+		else
+			printf ("-");
+	}
+    textattr(RESETATTR);
+	for (i = 0; i < height; i++){
+
+		gotoxy (1, i + 2);
+		textcolor (BLUE);
+		textbackground (CYAN);
+		printf ("|");
+		textattr (RESETATTR);
+
+		textcolor (WHITE);
+		for (j = 0; j < width; j++){
+		   printf (" ");
+		}
+
+		textcolor (BLUE);
+		textbackground (CYAN);
+		printf ("|");
+		textattr (RESETATTR);
+	}
+	gotoxy(1, height + 2);
+	textcolor (BLUE);
+    textbackground (CYAN);
+	for (i = 0; i < width+2; i++){
+		if (i == 0 || i == width+1)
+			printf ("+");
+		else
+			printf ("-");
+	}
+	textattr(RESETATTR);
+
     int num = game->no_of_initial_players;
     for (i = 0; i < num; i++){
         if (game->players[i].alive){
             draw_snake(&(game->players[i].snake));
         }
     }
-    draw_objects(game->food, game->no_of_food);
-    draw_objects(game->obstacles, game->no_of_obstacles);
-    textattr(RESETATTR);
+    // draw_objects(game->food, game->no_of_food);
+    // draw_objects(game->obstacles, game->no_of_obstacles);
+    // textattr(RESETATTR);
 }
 
-int initialize_gamestate(gamedata_t* game, player_t* players){
-    if (WEXITSTATUS(system("stty cbreak -echo stop u"))){
-        fprintf(stderr, "Check if stty missing?\n");
-        return 1;
-    }
+int initialize_gamestate(gamedata_t* gamedata, int num){
     int i, j;
-    int num = game->no_of_initial_players;
-    int width = 50, height = 50;
+    gamedata->no_of_initial_players = num;
+    gamedata->height = MAXROW; 
+    gamedata->width = MAXCOL;
     for(i = 0; i < num; i++){
-        players[i].snake.length = 2;
-        players[i].snake.color = 0x4;
-        for(j = 0; j < players[i].snake.length ; j++){
-            (players[i].snake.points)[j].first = 5*i+1;
-            (players[i].snake.points)[j].second = j+1;
+        gamedata->players[i].snake.length = 10;
+        gamedata->players[i].snake.color = WHITE;
+        gamedata->players[i].alive = 1;
+        for(j = 0; j < gamedata->players[i].snake.length ; j++){
+            (gamedata->players[i].snake.points)[j].first = j+5;
+            (gamedata->players[i].snake.points)[j].second = 5*i+5;
         }
-        draw_snake(&players[i].snake);
     }
+    draw_game_state(gamedata);
     return 0;
 }
 
@@ -360,22 +378,6 @@ void update_direction(struct player_t * player, char key){
     }
 }
 
-void running_state(gamedata_t* gamedata)
-{
-    draw_game_state(gamedata);
- 
-}
-/*
-initialize_arena
-
-in loop
-
-drawgamestate
-getchar
-send_move
-receive_moves
-next_game_state
-*/
 int fetch_id(players_info* players, char* ip_addr){
     for(int i = 0;i < players->num_of_players; i++){
         if(strcmp(players->player_info[i].ipaddr, ip_addr) == 0){
@@ -408,6 +410,10 @@ void periodic_work(gamedata_t * gamedata, int id,players_info* player_info_point
 }
 
 int main(){
+	if (WEXITSTATUS(system("stty cbreak -echo stop u"))){
+        fprintf(stderr, "Check if stty missing?\n");
+        return 1;
+    }
     data_t var;
     strcpy(var.ipaddr, "127.0.0.1");
     var.port_no = 1009;
@@ -420,10 +426,13 @@ int main(){
     if ( bind(socket_no, (struct sockaddr*) &udp_bind, sizeof(udp_bind)) == -1){
         perror("Failed to bind\n");
     }
-    gamedata_t* gamedata = (gamedata_t *)malloc(sizeof(gamedata));
-    //initialize_gamestate(MAX_PLAYERS,gamedata_var,player_info_pointer);
+    gamedata_t* gamedata = (gamedata_t *)malloc(sizeof(gamedata_t));
     int id = fetch_id(player_info_pointer, "127.0.0.1");
-    initialize_gamestate(gamedata, gamedata->players);
-    periodic_work(gamedata, id,player_info_pointer);
-    return 0;
+    printf("Number of Players: %d", player_info_pointer->num_of_players);
+    initialize_gamestate(gamedata, player_info_pointer->num_of_players);
+    // periodic_work(gamedata, id,player_info_pointer);
+
+    clrscr ();
+
+   	return WEXITSTATUS(system ("stty sane"));
 }

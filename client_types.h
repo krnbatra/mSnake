@@ -5,7 +5,7 @@
 #define MAX_BUFFER 25
 #define MAX_PLAYER_NAME 50
 #define MAXROW 50
-#define MAXCOL 120
+#define MAXCOL 150
 
 typedef int color_t;
 typedef char* ipaddr_t;
