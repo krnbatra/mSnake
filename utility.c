@@ -44,3 +44,25 @@ int bind_wrapper(int socket_no, char * ipaddress, int port_no, int reusable){
     }
     return bind(socket_no,(struct sockaddr*) &serverAddr,sizeof(serverAddr));
 }
+
+int connect_wrapper(int socket_no, char *ipaddress, int port_no){
+    struct sockaddr_in serverAddr;
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(port_no);
+    serverAddr.sin_addr.s_addr = inet_addr(ipaddress);
+    memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);
+    size_t addr_size = sizeof serverAddr;
+    if (connect(socket_no, (struct sockaddr *) &serverAddr, addr_size) == -1){
+        perror("Failed to connect to the server");
+        exit(2);
+    }
+    return 1;
+}
+
+size_t send_udp_wrapper(int socket_no, void * data, size_t size, char * ipaddress, int port_no){
+    struct sockaddr_in server_udp;
+    server_udp.sin_family = AF_INET;
+    server_udp.sin_addr.s_addr = inet_addr(ipaddress);
+    server_udp.sin_port = htons(port_no);
+    return sendto(socket_no, data, size, 0, (struct sockaddr*)&server_udp, sizeof(struct sockaddr_in));
+}
