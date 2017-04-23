@@ -81,6 +81,11 @@ void draw_game_state(){
 }
 
 void initialize_game(int num_of_players){
+    if (WEXITSTATUS(system("stty cbreak -echo"))){
+        printf("Failed setting up the screen, is 'stty' missing?");
+        exit(0);
+    }
+    
     int i,j;
     memset(&gameinstance, 0, sizeof(gamestate));
     num_of_snakes = num_of_players;
