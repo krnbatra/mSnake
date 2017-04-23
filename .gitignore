@@ -1,3 +1,4 @@
-a.out
+*.o
+*.out
 client
 server

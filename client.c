@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include "common.h"
 #include "utility.h"
+#include "game_functions.h"
 
 // typedef struct player_connection_data{
 //     char name[20];
@@ -31,11 +32,22 @@ int my_tcp_port_no;
 int my_udp_port_no;
 
 
+int fetch_id(players_info* players, char* ip_addr){
+    //fprintf(stdout,"no of players\t%d\n",players->num_of_players);
+    for(int i = 0;i < players->num_of_players; i++){
+        if(strcmp(players->player_info[i].ipaddr, ip_addr) == 0){
+            return i;
+        }
+    }
+    return -1;
+}
+
+
 
 int main(){
-	printf("Enter server IP address - TCP PORT - UDP - PORT\n");
+	printf("Enter server IP address - TCP PORT - UDP PORT\n");
 	scanf("%s %d %d\n",server_ipaddress,&server_tcp_port_no,&server_udp_port_no);
-	printf("Enter your IP address - TCP PORT - UDP - PORT\n");
+	printf("Enter your IP address - TCP PORT - UDP PORT\n");
 	scanf("%s %d %d\n",my_ipaddress,&my_tcp_port_no,&my_udp_port_no);
 	
 ///////////////////////////////////////
@@ -52,12 +64,13 @@ int main(){
 /////////////////////////////////////////
     my_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     network_data = (char*)calloc(num_of_connected_players,sizeof(char));
+
     while (1){
     	sleep(0.1);
     	recvfrom(my_socket, network_data, num_of_connected_players*sizeof(char), 0, NULL, 0);
     	update_moves();
-
     }
+
     close(my_socket);
     return 0;
 }
