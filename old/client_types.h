@@ -4,7 +4,7 @@
 #define MAX_FOOD 20
 #define MAX_BUFFER 25
 #define MAX_PLAYER_NAME 50
-#define MAXROW 50
+#define MAXROW 150
 #define MAXCOL 150
 
 typedef int color_t;
