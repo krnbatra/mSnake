@@ -21,23 +21,41 @@
 //     int alive;
 // }snake_t, *Snake;
 
+void initialize_game(int num_of_players);
+void draw_game_state();
+void check_for_collision();
+void draw_snake(Snake snake);
+void draw_objects();
+void update_direction(Snake snake, char key);
+void move_snake(Snake snake);
+void next_game_state(char * moves);
+void display_leaderboard();
+
+
 
 gamestate gameinstance;
 
-void draw_snake(Snake snake){
-    int len = snake->length;
-    int i;
-    struct pair* arr = snake->points;
-    textbackground (snake->color);
-    for (i = 0; i < len-1; i++){
-        gotoxy(arr[i].first, arr[i].second);
-        printf(" ");
+void initialize_game(int num_of_players){
+    if (WEXITSTATUS(system("stty cbreak -echo"))){
+        printf("Failed setting up the screen, is 'stty' missing?");
+        exit(0);
     }
-    textattr(RESETATTR);
-    gotoxy(arr[len-1].first, arr[len-1].second);
-    textbackground(RED);
-    puts(" ");
-    textattr(RESETATTR);
+    
+    int i,j;
+    memset(&gameinstance, 0, sizeof(gamestate));
+    gameinstance.num_of_snakes = num_of_players;
+
+    gameinstance.snake_list = (Snake)calloc(num_of_players, sizeof(snake_t));
+    for(i = 0; i < num_of_players; i++){
+        gameinstance.snake_list[i].length = 10;
+        gameinstance.snake_list[i].color = WHITE;
+        gameinstance.snake_list[i].alive = 1;
+        for(j = 0; j < gameinstance.snake_list[i].length ; j++){
+            (gameinstance.snake_list[i].points)[j].first = j+5;
+            (gameinstance.snake_list[i].points)[j].second = 5*i+5;
+        }
+    }
+    draw_game_state(gameinstance);
 }
 
 void draw_game_state(){
@@ -78,28 +96,33 @@ void draw_game_state(){
     textattr(RESETATTR);
     for (i = 0; i < num_of_snakes; i++)
         draw_snake(gameinstance.snake_list+i);
+    draw_objects();
 }
 
-void initialize_game(int num_of_players){
-    if (WEXITSTATUS(system("stty cbreak -echo"))){
-        printf("Failed setting up the screen, is 'stty' missing?");
-        exit(0);
+void draw_snake(Snake snake){
+    int len = snake->length;
+    int i;
+    struct pair* arr = snake->points;
+    textbackground (snake->color);
+    for (i = 0; i < len-1; i++){
+        gotoxy(arr[i].first, arr[i].second);
+        printf(" ");
     }
-    
-    int i,j;
-    memset(&gameinstance, 0, sizeof(gamestate));
-    num_of_snakes = num_of_players;
-    gameinstance.snake_list = (Snake)calloc(num_of_players, sizeof(snake_t));
-    for(i = 0; i < num_of_players; i++){
-        gameinstance.snake_list[i].length = 10;
-        gameinstance.snake_list[i].color = WHITE;
-        gameinstance.snake_list[i].alive = 1;
-        for(j = 0; j < gameinstance.snake_list[i].length ; j++){
-            (gameinstance.snake_list[i].points)[j].first = j+5;
-            (gameinstance.snake_list[i].points)[j].second = 5*i+5;
-        }
+    textattr(RESETATTR);
+    gotoxy(arr[len-1].first, arr[len-1].second);
+    textbackground(RED);
+    puts(" ");
+    textattr(RESETATTR);
+}
+
+void draw_objects(){
+    int i ;
+    textbackground(CYAN);
+    for (i = 0; i < gameinstance.num_of_obstacles; i++){
+        if (gameinstance.obstacles[i].first == -1) continue; //consumed
+        gotoxy(gameinstance.obstacles[i].first, gameinstance.obstacles[i].second);
+        puts("()");
     }
-    draw_game_state(gameinstance);
 }
 
 void update_direction(Snake snake, char key){
@@ -211,7 +234,6 @@ void move_snake(Snake snake){
     }
 }
 
-
 void next_game_state(char * moves){
     int i;
     for (i=0;i<num_of_snakes;i++)
@@ -219,97 +241,77 @@ void next_game_state(char * moves){
     for (i=0;i<num_of_snakes;i++)
         if (gameinstance.snake_list[i].alive)
             move_snake(gameinstance.snake_list+i);
+    check_for_collision();
 }
 
+void check_for_collision(){
+    int n = gameinstance.num_of_snakes;
+    int i = 0, j = 0;
+    int status[n];
+    memset(status, 0, n*sizeof(int));
+    for (i = 0;i < n; i++){
+        Snake snake = gameinstance.snake_list+i;
+        int len = snake->length;
+        int headx = (snake->points[len-1]).first, heady = (snake->points[len-1]).second;
+        if (!snake->alive) continue;
+        // collision against walls
+        if (headx == 0 || headx == WIDTH-1 || heady == 0 || heady == HEIGHT-1){
+            status[i] = 1;
+            continue;
+        }
+        // collision against obstacles
+        for (j = 0;j < gameinstance.num_of_obstacles; j++){
+            if (gameinstance.obstacles[j].first == headx && gameinstance.obstacles[j].second == heady){
+                status[i] = 1;
+                break;
+            }
+        }
+        if (!status[i]) continue;
+        // self collision
+        for (j = 0;j < (len-1); j++){
+            if (headx == snake->points[j].first && heady == snake->points[j].second ){
+                status[i] = 1;
+                break;
+            }
+        }
+        if (status[i]) continue;
+        // collision against others
+        for (j = 0;j < n; j++){
+            if (j == i) continue;
+            Snake snake2 = gameinstance.snake_list + j;
+            if (!snake2->alive) continue;
+            int len2 = snake2->length;
+            int headx2 = (snake2->points[len2-1]).first, heady2 = (snake2->points[len2-1]).second;
+            int k = 0;
+            for(k = 0;k < len2; k++){
+                if (headx == (snake2->points[k]).first && heady == (snake2->points[k]).second){
+                    status[i] = 1;
+                    break;
+                }
+            }
+        }
+    }
+    for (i=0;i<n;i++){
+    	if (status[i]){
+    		gameinstance.snake_list[i].alive = 0;
+    		gameinstance.num_of_live_snakes--;
+    	}
+    }
+}
 
-
-
-
-// void check_for_collision(gamestate * gamestate){
-//     int n = gamestate->no_of_initial_players;
-//     int i = 0, j = 0;
-//     for (i = 0;i < n; i++){
-//         struct player_t *player = &(gamestate->players[i]);
-//         struct snake_t *snake = &(player->snake);
-//         int len = snake->length;
-//         int headx = (snake->points[len-1]).first, heady = (snake->points[len-1]).second;
-//         if (!player->alive) continue;
-//         // collision against walls
-//         if (headx == 0 || headx == MAXROW-1 || heady == 0 || heady == MAXCOL-1){
-//             player->alive = 0;
-//             gamestate->no_of_live_players--;
-//             continue;
-//         }
-//         // collision against obstacles
-//         for (j = 0;j < gamestate->no_of_food; j++){
-//             struct pair_t *obstacle = &(gamestate->obstacles[j]);
-//             if (obstacle->first == headx && obstacle->second == heady){
-//                 player->alive = 0;
-//                 gamestate->no_of_live_players--;
-//                 break;
-//             }
-//         }
-//         if (!player->alive) continue;
-//         // self collision
-//         for (j = 0;j < (len-1); j++){
-//             if (headx == (snake->points[j]).first && heady == (snake->points[j]).second ){
-//                 player->alive = 0;
-//                 gamestate->no_of_live_players--;
-//                 break;
-//             }
-//         }
-//         if (!player->alive) continue;
-//         // collision against others
-//         for (j = 0;j < n; j++){
-//             if (j == i) continue;
-//             struct player_t *player2 = &(gamestate->players[i]);
-//             struct snake_t *snake2 = &(player2->snake);
-//             int len2 = snake2->length;
-//             if (!player->alive)     break;
-//             if (!player2->alive)    continue;
-//             int headx2 = (snake2->points[len2-1]).first, heady2 = (snake2->points[len2-1]).second;
-//             if (headx == headx2 && heady == heady2){
-//                 player->alive = 0;
-//                 player2->alive = 0;
-//                 gamestate->no_of_live_players--;
-//                 continue;
-//             }
-//             int k = 0;
-//             for(k = 0;k < (len2-1); k++){
-//                 if (headx == (snake2->points[k]).first && heady == (snake2->points[k]).second){
-//                     player->alive = 0;
-//                     gamestate->no_of_live_players--;
-//                     break;
-//                 }
-//             }
-//         }
-//     }
-// }
-
-// void draw_objects(pair_t * obj, int num){
-//     int i = 0;
-//     textbackground(CYAN);
-//     for (; i < num; i++){
-//         if (obj[i].first == -1) continue; //consumed
-//         gotoxy(obj[i].first, obj[i].second);
-//         puts("@");
-//     }
-// }
-
-
-// void display_leaderboard(player_t * players, int no_of_players){
-//     int i, j;
-//     for(i = 0; i < no_of_players; i++){
-//         for(j = 0; j < no_of_players-1; j++){
-//             if(players[j].score < players[j+1].score){
-//                 player_t temp = players[j];
-//                 players[j] = players[j+1];
-//                 players[j+1] = temp;
-//             }
-//         }
-//     }
-//     for(i = 0; i < no_of_players; i++){
-//         printf("%d %s %d\n", i+1, players[i].name, players[i].score);
-//     }
-
-// }
+void display_leaderboard(){
+    int i, j;
+    for(i = 0; i < gameinstance.num_of_snakes; i++){
+        for(j = 0; j < gameinstance.num_of_snakes-1; j++){
+            if(gameinstance.snake_list[i].score < gameinstance.snake_list[j+1].score){
+                snake_t temp = gameinstance.snake_list[j];
+                gameinstance.snake_list[j] = gameinstance.snake_list[j+1];
+                gameinstance.snake_list[j+1] = temp;
+            }
+        }
+    }
+    for(i = 0; i < gameinstance.num_of_snakes; i++){
+    	//if (gameinstance.snake_list[i].alive)
+	        printf("%d %d\n", i, gameinstance.snake_list[i].score);
+    }
+}

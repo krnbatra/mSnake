@@ -4,8 +4,8 @@
 #define MAX_FOOD 20
 #define MAX_BUFFER 25
 #define MAX_PLAYER_NAME 50
-#define HEIGHT 150
-#define WIDTH 150
+#define HEIGHT 70
+#define WIDTH 70
 
 char up = 'w';
 char left = 'a';
@@ -31,14 +31,18 @@ typedef struct snake{
     int color;
     direction_t dir;
     int alive;
+    int score;
 }snake_t, *Snake;
 
 
 typedef struct gamestate{
     Snake snake_list;
-    pair food[MAX_FOOD];
+    pair food_items[MAX_FOOD];
     pair obstacles[MAX_OBSTACLES];
     int level;
     int num_of_snakes;
+    int num_of_live_snakes;
+    int num_of_food_items;
+    int num_of_obstacles;
 }gamestate, *Gamestate;
 

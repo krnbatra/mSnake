@@ -53,14 +53,14 @@ int main(){
   printf("Enter your IP address - TCP PORT - UDP PORT\n");
   // scanf("%s %d %d",my_ipaddress,&my_tcp_port_no,&my_udp_port_no);
     strcpy(my_ipaddress, "172.17.46.48");
-    my_tcp_port_no = 8005;
-    my_udp_port_no = 9001;
+    my_tcp_port_no = 9005;
+    my_udp_port_no = 9004;
   
 ///////////////////////////////////////
   my_socket = socket(AF_INET, SOCK_STREAM, 0);
     int status = bind_wrapper(my_socket, my_ipaddress, my_tcp_port_no, 1);
     connect_wrapper(my_socket, server_ipaddress, server_tcp_port_no);
-    strcpy(my_data.ipaddr,my_ipaddress); strcpy(my_data.name, "abhishek"); my_data.port_no = my_udp_port_no;
+    strcpy(my_data.ipaddr,my_ipaddress); strcpy(my_data.name, "sodi"); my_data.port_no = my_udp_port_no;
     size_t returnSend = send(my_socket, &my_data, sizeof(player_connection_data), 0);
     if(returnSend != sizeof(player_connection_data)){
         printf("ERROR in sending\n");
@@ -76,10 +76,9 @@ int main(){
         printf("ERROR in receving 2\n");
     for(int i = 0;i < num_of_connected_players; i++){
         if (!strcmp(conn_info[i].ipaddr, my_ipaddress) && conn_info[i].port_no==my_udp_port_no){
-          my_id = i;
-          break;
+        	my_id = i;
+        	break;
         }
-    
     }
     close(my_socket);
 
