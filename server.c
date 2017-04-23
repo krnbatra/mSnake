@@ -24,7 +24,6 @@
 const int waiting_time = 10;
 int num_of_connected_players;
 int wait_min = 1;
-int over = 1;
 player_connection_data conn_info[MAX_PLAYERS];
 char *network_data;
 int serverSocket;
@@ -36,11 +35,11 @@ void stop_listening(int signal){
 
 void receive_moves(){
     int arr[2] = {};
-    over = 1;
-    start_timer(0, 10000000);
-    while (over){
+    wait_min = 1;
+    start_timer(0, 50000);
+    while (wait_min){
         if(recvfrom(serverSocket, arr, 2*sizeof(int), 0, NULL, 0) == -1)
-            perror("ERROR IN RECEIVING : ");
+            perror("ERROR IN RECEIVING");
         else {     
             printf("Received move from %d = %d/%c\n", arr[0], arr[1], arr[1]);
             network_data[arr[0]] = arr[1];
@@ -54,8 +53,7 @@ void send_moves(){
     for(int i = 0;i < num_of_connected_players; i++){
         client_addr.sin_addr.s_addr = inet_addr(conn_info[i].ipaddr);
         client_addr.sin_port = htons(conn_info[i].port_no);
-        if(sendto(serverSocket, network_data,num_of_connected_players*sizeof(char),\
-            0, (struct sockaddr*)&client_addr, sizeof(client_addr)) == -1)
+        if(sendto(serverSocket, network_data,num_of_connected_players*sizeof(char), 0, (struct sockaddr*)&client_addr, sizeof(client_addr)) != num_of_connected_players*sizeof(char))
             perror("ERROR IN SENDING\n");
         else
             printf("Sent game data to %d\n", i);
@@ -68,7 +66,7 @@ void* work_pthread(void * dataptr){
     int newSocket = arr[0];
     int player_id = arr[1];
     size_t nr = recv(newSocket, &conn_info[player_id], sizeof(player_connection_data), 0);
-    if (nr != sizeof(int)*2) { printf("Data not received properly\n");  exit(2); }
+    if (nr != sizeof(player_connection_data)) { printf("Data not received properly\n");  exit(2); }
     printf("Client connected --> ip = %s | port_no = %d | name = %s\n", 
                 conn_info[player_id].ipaddr, conn_info[player_id].port_no, conn_info[player_id].name);
     while (wait_min) {
@@ -125,11 +123,10 @@ int main(){
 
 //////////////////////////////////////
     printf("Going into infinite loop\n");
-    serverSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    serverSocket = socket(AF_INET, SOCK_DGRAM,0);
     network_data = (char*)malloc(num_of_connected_players*sizeof(char));
     bind_wrapper(serverSocket, my_ip_address, udp_port_no,0);
     while (1){
-        sleep(0.01);
         receive_moves();
         send_moves();
     }
