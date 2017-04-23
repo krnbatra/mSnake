@@ -25,14 +25,14 @@ void next_game_state(gamedata_t * gamestate);
 void move_snake(player_t * player, pair_t * food, int no_of_food);
 void update_direction(player_t * player, char key);
 
-
+FILE* fp;
 char up = 'w';
 char left = 'a';
 char down = 's';
 char right = 'd';
 char left_turn = 'j';
 char right_turn = 'k';
-struct sockaddr_in udp_bind;
+struct sockaddr_in udp_bind, server_udp;
 
 
 void draw_snake(snake_t *snake){
@@ -192,19 +192,19 @@ void send_move(move_t* player_move, int portno, char* server_ip_addr){
     to_be_sent.sin_family = AF_INET;
     to_be_sent.sin_port = htons(portno);
     to_be_sent.sin_addr.s_addr = inet_addr(server_ip_addr);
-    if(sendto(socket_no, player_move, sizeof(move_t), 0, (struct sockaddr*)&udp_bind, sizeof(udp_bind)) == 0){
+    if(sendto(socket_no, player_move, sizeof(move_t), 0, (struct sockaddr*)&server_udp, sizeof(struct sockaddr_in)) == 0){
         perror("ERROR IN SENDING\n");
     }
 
 
 }
-
 // client receive
 move_t* receive_moves(int portno, char* server_ip_addr){
     move_t* returnMoves = (move_t*)malloc(sizeof(move_t)*MAX_PLAYERS);
     if(recvfrom(socket_no, returnMoves, sizeof(move_t)*MAX_PLAYERS, 0, NULL, 0) == -1){
         perror("ERROR IN RECEIVING");
     }
+    fprintf(stdout,"hello\t%c\n",returnMoves[0].key);
     return returnMoves;
 }
 
@@ -379,6 +379,7 @@ void update_direction(struct player_t * player, char key){
 }
 
 int fetch_id(players_info* players, char* ip_addr){
+    //fprintf(stdout,"no of players\t%d\n",players->num_of_players);
     for(int i = 0;i < players->num_of_players; i++){
         if(strcmp(players->player_info[i].ipaddr, ip_addr) == 0){
             return i;
@@ -396,41 +397,53 @@ void periodic_work(gamedata_t * gamedata, int id,players_info* player_info_point
 		move_t move;
 		move.player_id = id;
 		move.key = c;
-		if(sendto(socket_no, &move, sizeof(move_t), 0, (struct sockaddr*)&udp_bind, sizeof(udp_bind)) == -1){
+		// printf("KEY PRESSED: %c\n", c);
+		if(sendto(socket_no, &move, sizeof(move_t), 0, (struct sockaddr*)&server_udp, sizeof(struct sockaddr_in)) == -1){
 	        perror("ERROR IN SENDING\n");
 	    }
-	    move_t *array = receive_moves(9001, "127.0.0.1");
+	    // printf("%c\n", c);
+	    move_t *array = receive_moves(9001, "172.17.49.75");
+	    // fprintf(fp,"h\n%c\nh",array[0].key);
 	    int i;
-	    for (i=0;i<MAX_PLAYERS;i++){
+	    for (i=0;i<gamedata->no_of_initial_players;i++){
 	    	if (array[i].key != 'x')
 	    		update_direction(&(gamedata->players[i]), array[i].key);
 	    }
+
 	    next_game_state(gamedata);
 	}
 }
 
 int main(){
-	if (WEXITSTATUS(system("stty cbreak -echo stop u"))){
+	// FILE * fps;
+	// fps = fopen ("file.txt", "w+");
+ //    fprintf(fps, "%s %s %s %d", "We", "are", "in", 2012);
+   
+   if (WEXITSTATUS(system("stty cbreak -echo stop u"))){
         fprintf(stderr, "Check if stty missing?\n");
         return 1;
     }
     data_t var;
-    strcpy(var.ipaddr, "127.0.0.1");
-    var.port_no = 1009;
+    strcpy(var.ipaddr, "172.17.46.48");
+    var.port_no = 9001;
     strcpy(var.name, "modi");
-    players_info* player_info_pointer = establish_connection("127.0.0.1", 8054, &var);
+    players_info* player_info_pointer = establish_connection("172.17.49.75", 8054, &var);
+    server_udp.sin_family = AF_INET;
+    server_udp.sin_port = htons(9001);
+    server_udp.sin_addr.s_addr = inet_addr("172.17.49.75");
     socket_no = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     udp_bind.sin_family = AF_INET;
     udp_bind.sin_port = htons(9001);
-    udp_bind.sin_addr.s_addr = inet_addr("127.0.0.1");
+    udp_bind.sin_addr.s_addr = inet_addr("172.17.46.48");
     if ( bind(socket_no, (struct sockaddr*) &udp_bind, sizeof(udp_bind)) == -1){
         perror("Failed to bind\n");
     }
     gamedata_t* gamedata = (gamedata_t *)malloc(sizeof(gamedata_t));
-    int id = fetch_id(player_info_pointer, "127.0.0.1");
-    printf("Number of Players: %d", player_info_pointer->num_of_players);
+    int id = fetch_id(player_info_pointer, "172.17.46.48");
+    printf("Number of Players: %d\n", player_info_pointer->num_of_players);
     initialize_gamestate(gamedata, player_info_pointer->num_of_players);
-    // periodic_work(gamedata, id,player_info_pointer);
+    // fp=fopen("test.txt","w");
+    periodic_work(gamedata, id,player_info_pointer);
 
     clrscr ();
 
