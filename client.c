@@ -8,6 +8,7 @@
 #include <sys/types.h> //for WEXITSTATUS
 #include <sys/wait.h> //for WEXITSTATUS
 #include <unistd.h>
+#include <pthread.h>
 #include "common.h"
 #include "utility.h"
 #include "game_functions.h"
@@ -30,19 +31,18 @@ int server_tcp_port_no ;
 int server_udp_port_no;
 int my_tcp_port_no;
 int my_udp_port_no;
+int my_id;
 
-
-int fetch_id(players_info* players, char* ip_addr){
-    //fprintf(stdout,"no of players\t%d\n",players->num_of_players);
-    for(int i = 0;i < players->num_of_players; i++){
-        if(strcmp(players->player_info[i].ipaddr, ip_addr) == 0){
-            return i;
-        }
-    }
-    return -1;
+void * pthread_work(void * data){
+	char c;
+	int arr[2];
+	arr[0] = my_id;
+	while (1){
+		c = getchar();
+		arr[1] = c;
+		send_udp_wrapper(my_socket, arr, 2*sizeof(int), server_ipaddress, server_udp_port_no);
+	}
 }
-
-
 
 int main(){
 	printf("Enter server IP address - TCP PORT - UDP PORT\n");
@@ -64,13 +64,15 @@ int main(){
 /////////////////////////////////////////
     my_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     network_data = (char*)calloc(num_of_connected_players,sizeof(char));
-
+    initialize_game(num_of_connected_players);
+    pthread_t thread_id;
+    pthread_create(&thread_id, NULL, pthread_work, NULL);
     while (1){
     	sleep(0.1);
     	recvfrom(my_socket, network_data, num_of_connected_players*sizeof(char), 0, NULL, 0);
-    	update_moves();
+    	next_game_state(network_data);
     }
-
+    pthread_join(thread_id, NULL);
     close(my_socket);
     return 0;
 }
