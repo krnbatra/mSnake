@@ -94,7 +94,7 @@ void draw_game_state(){
             printf ("-");
     }
     textattr(RESETATTR);
-    for (i = 0; i < num_of_snakes; i++)
+    for (i = 0; i < gameinstance.num_of_snakes; i++)
         draw_snake(gameinstance.snake_list+i);
     draw_objects();
 }
@@ -236,9 +236,9 @@ void move_snake(Snake snake){
 
 void next_game_state(char * moves){
     int i;
-    for (i=0;i<num_of_snakes;i++)
+    for (i=0;i<gameinstance.num_of_snakes;i++)
         update_direction(gameinstance.snake_list+i, moves[i]);
-    for (i=0;i<num_of_snakes;i++)
+    for (i=0;i<gameinstance.num_of_snakes;i++)
         if (gameinstance.snake_list[i].alive)
             move_snake(gameinstance.snake_list+i);
     check_for_collision();
@@ -266,7 +266,7 @@ void check_for_collision(){
                 break;
             }
         }
-        if (!status[i]) continue;
+        if (status[i]) continue;
         // self collision
         for (j = 0;j < (len-1); j++){
             if (headx == snake->points[j].first && heady == snake->points[j].second ){

@@ -14,7 +14,6 @@ char right = 'd';
 char left_turn = 'j';
 char right_turn = 'k';
 typedef int color_t;
-int num_of_snakes;
 
 typedef enum direction_t{
     UP = 0, DOWN, LEFT, RIGHT
