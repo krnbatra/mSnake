@@ -42,6 +42,7 @@ void * pthread_work(void * data){
     arr[1] = c;
     send_udp_wrapper(my_socket, arr, 2*sizeof(int), server_ipaddress, server_udp_port_no);
   }
+
 }
 
 int main(){
