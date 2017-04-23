@@ -1,3 +1,3 @@
 all:
-	gcc -g server.c -lpthread -o server
-	gcc -g client.c -o client
+	gcc -g -c utility.c
+	gcc -g server.c utility.o -lpthread -o server
