@@ -3,8 +3,8 @@
 #define NUM_OBSTACLES 20
 #define NUM_FOOD_ITEMS 20
 #define MAX_PLAYER_NAME 50
-#define HEIGHT 70
-#define WIDTH 70
+#define HEIGHT 40
+#define WIDTH 80
 
 char up = 'w';
 char left = 'a';

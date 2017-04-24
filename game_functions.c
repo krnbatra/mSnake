@@ -21,6 +21,7 @@
 //     direction_t dir;
 //     int alive;
 // }snake_t, *Snake;
+extern char name[40];
 
 void initialize_game(int num_of_players);
 void draw_game_state();
@@ -257,6 +258,7 @@ int next_game_state(char * moves){
         if (gameinstance.snake_list[i].alive)
             move_snake(gameinstance.snake_list+i);
     check_for_collision();
+    display_leaderboard();
     return !gameinstance.snake_list[my_id].alive;
 }
 
@@ -335,8 +337,15 @@ void display_leaderboard(){
             }
         }
     }
+    gotoxy(WIDTH, 1);
+    textcolor(RED);
+    textbackground(YELLOW);
+    printf("%5s %15s %5s\n", "RANK", "NAME", "SCORE");
     for(i = 0; i < gameinstance.num_of_snakes; i++){
-    	//if (gameinstance.snake_list[i].alive)
-	        printf("%d %d\n", i, gameinstance.snake_list[i].score);
+        gotoxy(WIDTH+1, i+2);
+        textcolor(RED);
+        textbackground(YELLOW);
+        printf("%5d %15s %5d\n", i+1,name, gameinstance.snake_list[i].score);
     }
+    textattr(RESETATTR);
 }

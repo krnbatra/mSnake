@@ -28,6 +28,7 @@ char *network_data;
 
 char server_ipaddress[40];
 char my_ipaddress[40];
+char name[40];
 int server_tcp_port_no ;
 int server_udp_port_no;
 int my_tcp_port_no;
@@ -54,6 +55,7 @@ int main(){
     // scanf("%s %d",server_ipaddress,&server_tcp_port_no);
     strcpy(my_ipaddress, "172.17.49.75");
     my_tcp_port_no = 8008;
+    strcpy(name,"abhishek");
     // scanf("%s %d",my_ipaddress,&my_tcp_port_no);
 
     my_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -62,6 +64,10 @@ int main(){
     printf("Connected to the server\n");
     int arr[2];
     size_t nr;
+    if ((nr=send(my_socket,name,40*sizeof(char),0)) != 40*sizeof(char)){
+    	perror("Error in sending name\n");
+    	return 1;
+    }
     if ((nr = recv(my_socket, arr, 2*sizeof(int), 0)) != 2*sizeof(int)){
         printf("Bytes received : %lu\n", nr);
         perror("ERROR in receiving"); 

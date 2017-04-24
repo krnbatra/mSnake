@@ -21,7 +21,7 @@
 
 
 #define MAX_PLAYERS 8
-#define FPS 20
+#define FPS 10
 const int waiting_time = 10;
 int num_of_connected_players;
 int num_of_alive_players;
@@ -31,11 +31,12 @@ int alive[MAX_PLAYERS];
 char network_data[MAX_PLAYERS];
 int serverSocket;
 int socket_data[MAX_PLAYERS];
-
+char name[40];
 
 void stop_listening(int signal){
     wait_min = 0;
 }
+int var;
 
 void* work_sender(void *dataptr){
     int i;
@@ -47,11 +48,13 @@ void* work_sender(void *dataptr){
         wait_min = 1;
         start_timer(0,1000000/FPS);
         while (wait_min) ;
+        var = 1;
         for (i=0;i<num_of_connected_players;i++){
             if (!alive[i]) continue;
             send(socket_data[i], network_data, num_of_connected_players*sizeof(char), 0);
         }
         if (num_of_alive_players==0) break;
+        var = 0;
     }
     pthread_exit(NULL);
 }
@@ -66,12 +69,16 @@ void* client_handler(void * dataptr){
     arr[0] = num_of_connected_players;
     arr[1] = player_id;
     size_t ns;
+    if (recv(newSocket, name, 40*sizeof(char), 0) != sizeof(char)*40){
+    	perror("Name not received correctly\n");
+    }
     if (send(newSocket, arr, 2*sizeof(int), 0) != 2*sizeof(int))
         perror("Failed in sending information\n");
     char move;
     while (1){
+        //pthread_mutex_lock(&mutex1);
         if (recv(newSocket, &move, sizeof(char), 0) == sizeof(char)){    	
-            printf("Received move from %d : %d\%c\n", player_id, move, move);
+            printf("Received move from %d : %d/%c\n", player_id, move, move);
             if (move == 'X'){
                 alive[player_id] = 0;
                 num_of_alive_players--;
@@ -86,6 +93,7 @@ void* client_handler(void * dataptr){
             printf("Player %d got disconnected\n", player_id);
             break;
         }
+        //pthread_mutex_unlock(&mutex1);
     }
     close(newSocket);
     pthread_exit(NULL);
