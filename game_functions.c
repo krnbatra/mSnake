@@ -28,10 +28,10 @@ void draw_snake(Snake snake);
 void draw_objects();
 void update_direction(Snake snake, char key);
 void move_snake(Snake snake);
-void next_game_state(char * moves);
+int next_game_state(char * moves);
 void display_leaderboard();
 
-
+extern int my_id;
 
 gamestate gameinstance;
 
@@ -234,7 +234,7 @@ void move_snake(Snake snake){
     }
 }
 
-void next_game_state(char * moves){
+int next_game_state(char * moves){
     int i;
     for (i=0;i<gameinstance.num_of_snakes;i++)
         update_direction(gameinstance.snake_list+i, moves[i]);
@@ -242,6 +242,7 @@ void next_game_state(char * moves){
         if (gameinstance.snake_list[i].alive)
             move_snake(gameinstance.snake_list+i);
     check_for_collision();
+    return !gameinstance.snake_list[my_id].alive;
 }
 
 void check_for_collision(){

@@ -21,11 +21,14 @@
 
 
 #define MAX_PLAYERS 8
+#define FPS 5
 const int waiting_time = 10;
 int num_of_connected_players;
+int num_of_alive_players;
 int wait_min = 1;
 player_connection_data conn_info[MAX_PLAYERS];
-char *network_data;
+int alive[MAX_PLAYERS];
+char network_data[MAX_PLAYERS];
 int serverSocket;
 
 
@@ -36,11 +39,10 @@ void stop_listening(int signal){
 void receive_moves(){
     int arr[2] = {};
     wait_min = 1;
-    start_timer(0, 50000);
+    start_timer(0, 1000000/FPS);
     while (wait_min){
-        if(recvfrom(serverSocket, arr, 2*sizeof(int), 0, NULL, 0) == -1)
-            perror("ERROR IN RECEIVING");
-        else {     
+        if(recvfrom(serverSocket, arr, 2*sizeof(int), 0, NULL, 0) == -1);
+        else {
             printf("Received move from %d = %d/%c\n", arr[0], arr[1], arr[1]);
             network_data[arr[0]] = arr[1];
         }
@@ -51,13 +53,11 @@ void send_moves(){
     struct sockaddr_in client_addr;
     client_addr.sin_family = AF_INET;
     for(int i = 0;i < num_of_connected_players; i++){
+        if (alive[i] == 0) continue;
         client_addr.sin_addr.s_addr = inet_addr(conn_info[i].ipaddr);
         client_addr.sin_port = htons(conn_info[i].port_no);
         if(sendto(serverSocket, network_data,num_of_connected_players*sizeof(char), 0, (struct sockaddr*)&client_addr, sizeof(client_addr)) != num_of_connected_players*sizeof(char))
             perror("ERROR IN SENDING\n");
-        else
-            printf("Sent game data to %d\n", i);
-        
     }
 }
 
@@ -100,7 +100,7 @@ int main(){
     printf("Listening for players\n");
     serverSocket = 0;
     int newSocket = 0;
-    serverSocket = socket(PF_INET, SOCK_STREAM, 0);
+    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     int status = bind_wrapper(serverSocket, my_ip_address, tcp_port_no, 1);
     if (listen( serverSocket, 1)) {
         perror("Some problem in listen\n");
@@ -108,7 +108,7 @@ int main(){
     }
     pthread_t tid[MAX_PLAYERS];
     int i;
-    start_timer(5, 0);
+    start_timer(waiting_time, 0);
     for (i = 0; i < MAX_PLAYERS && wait_min; i++){
         newSocket = accept(serverSocket,NULL,NULL);
         if (newSocket != -1){
@@ -122,14 +122,17 @@ int main(){
     close(serverSocket);
 
 //////////////////////////////////////
-    printf("Going into infinite loop\n");
+    printf("Starting game\n");
+    printf("Number of players connected : %d\n", num_of_connected_players);
+    num_of_alive_players = num_of_connected_players;
+    for (i=0;i<num_of_alive_players;i++) alive[i] = 1;
     serverSocket = socket(AF_INET, SOCK_DGRAM,0);
-    network_data = (char*)malloc(num_of_connected_players*sizeof(char));
     bind_wrapper(serverSocket, my_ip_address, udp_port_no,0);
     while (1){
         receive_moves();
         send_moves();
     }
+    printf("Game over!\n");
     close(serverSocket);
     return 0;
 }
