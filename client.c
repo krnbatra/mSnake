@@ -80,6 +80,8 @@ int main(){
     while (1){
         if(recv(my_socket, network_data, num_of_connected_players*sizeof(char), 0) != sizeof(char)*num_of_connected_players){
             perror("Data received incorrectly!");
+            printf("Server Error\n");
+            exit(0);
         }
         next_game_state(network_data); //status = 1 means dead
     }

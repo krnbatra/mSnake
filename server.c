@@ -44,7 +44,9 @@ void* work_sender(void *dataptr){
     }
     sleep(1);
     while (1){
-        sleep(1.0/FPS);
+        wait_min = 1;
+        start_timer(0,1000000/FPS);
+        while (wait_min) ;
         for (i=0;i<num_of_connected_players;i++){
             if (!alive[i]) continue;
             send(socket_data[i], network_data, num_of_connected_players*sizeof(char), 0);
@@ -116,6 +118,7 @@ int main(){
     for (i = 0; i < MAX_PLAYERS && wait_min; i++){
         newSocket = accept(serverSocket,NULL,NULL);
         socket_data[num_of_connected_players] = newSocket;
+        printf("Assigned socket %d to %d", newSocket, num_of_connected_players);
         alive[num_of_connected_players] = 1;
         if (newSocket != -1){
             int *arr = (int*)malloc(sizeof(int)*2);
@@ -124,6 +127,7 @@ int main(){
         }
     }
     printf("Number of connected players : %d\n", num_of_connected_players);
+    num_of_alive_players = num_of_connected_players;
     pthread_t sender;
     pthread_create(&sender, NULL, work_sender, NULL);
     for (i = 0; i < num_of_connected_players; i++)
