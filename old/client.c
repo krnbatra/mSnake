@@ -326,16 +326,16 @@ void move_snake(struct player_t * player, struct pair_t * food, int no_of_food){
 void update_direction(struct player_t * player, char key){
     struct snake_t *snake = &(player->snake);
     int previousDirection = snake->dir;
-    if (key == right){
+    if (key == right && previousDirection!=LEFT){
         snake->dir = RIGHT;
     }
-    else if (key == left){
+    else if (key == left && previousDirection!=RIGHT){
         snake->dir = LEFT;
     }
-    else if (key == up){
+    else if (key == up && previousDirection!=DOWN){
         snake->dir = UP;
     }
-    else if (key == down){
+    else if (key == down && previousDirection!=UP){
         snake->dir = DOWN;
     }
     else if (key == left_turn){

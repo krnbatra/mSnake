@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "game_functions_datatypes.h"
 #include "conio.h"
 
@@ -40,11 +41,9 @@ void initialize_game(int num_of_players){
         printf("Failed setting up the screen, is 'stty' missing?");
         exit(0);
     }
-    
     int i,j;
     memset(&gameinstance, 0, sizeof(gamestate));
     gameinstance.num_of_snakes = num_of_players;
-
     gameinstance.snake_list = (Snake)calloc(num_of_players, sizeof(snake_t));
     for(i = 0; i < num_of_players; i++){
         gameinstance.snake_list[i].length = 10;
@@ -65,37 +64,35 @@ void draw_game_state(){
     gotoxy(1, 1);
     textcolor (BLUE);
     textbackground (CYAN);
-    for (i = 0; i < width+2; i++){
-        if (i == 0 || i == width+1)  printf ("+");
-        else printf ("-");
+    for (i = 1; i <=width; i++){
+        printf("-");
     }
     textattr(RESETATTR);
-    for (i = 0; i < height; i++){
-        gotoxy (1, i + 2);
+    for (i = 2; i < height; i++){
+        gotoxy (1,i);
         textcolor (BLUE);
         textbackground (CYAN);
         printf ("|");
         textattr (RESETATTR);
         textcolor (WHITE);
-        for (j = 0; j < width; j++)
+        for (j = 2; j < width; j++)
            printf (" ");
         textcolor (BLUE);
         textbackground (CYAN);
         printf ("|");
         textattr (RESETATTR);
     }
-    gotoxy(1, height + 2);
+    gotoxy(1, height);
     textcolor (BLUE);
     textbackground (CYAN);
-    for (i = 0; i < width+2; i++){
-        if (i == 0 || i == width+1)
-            printf ("+");
-        else
-            printf ("-");
+    for (i = 1; i <= width; i++){
+        printf ("-");
     }
     textattr(RESETATTR);
     for (i = 0; i < gameinstance.num_of_snakes; i++)
         draw_snake(gameinstance.snake_list+i);
+    gameinstance.num_of_obstacles = NUM_OBSTACLES;
+    gameinstance.num_of_food_items = NUM_FOOD_ITEMS;
     draw_objects();
 }
 
@@ -116,27 +113,45 @@ void draw_snake(Snake snake){
 }
 
 void draw_objects(){
-    int i ;
+    srand(time(NULL));
+    int i;
+    int height = HEIGHT, width = WIDTH; 
+    for (i = 0; i < gameinstance.num_of_obstacles; i++) {
+        gameinstance.obstacles[i].first = rand()%(width-2)+2;
+        gameinstance.obstacles[i].second = rand()%(height-2)+2;
+        gameinstance.food_items[i].first = rand()%(width-2)+2;
+        gameinstance.food_items[i].second = rand()%(height-2)+2;
+    }
+    textcolor(CYAN);
     textbackground(CYAN);
     for (i = 0; i < gameinstance.num_of_obstacles; i++){
         if (gameinstance.obstacles[i].first == -1) continue; //consumed
         gotoxy(gameinstance.obstacles[i].first, gameinstance.obstacles[i].second);
-        puts("()");
+        printf("$");
     }
+
+    textcolor(BLUE);
+    textbackground(BLUE);
+    for (i = 0; i < gameinstance.num_of_food_items; i++) {
+        if (gameinstance.food_items[i].first == -1) continue; //consumed
+        gotoxy(gameinstance.food_items[i].first, gameinstance.food_items[i].second);
+        printf("@");
+    }
+    textattr(RESETATTR);
 }
 
 void update_direction(Snake snake, char key){
     int previousDirection = snake->dir;
-    if (key == right){
+        if (key == right && previousDirection!=LEFT){
         snake->dir = RIGHT;
     }
-    else if (key == left){
+    else if (key == left && previousDirection!=RIGHT){
         snake->dir = LEFT;
     }
-    else if (key == up){
+    else if (key == up && previousDirection!=DOWN){
         snake->dir = UP;
     }
-    else if (key == down){
+    else if (key == down && previousDirection!=UP){
         snake->dir = DOWN;
     }
     else if (key == left_turn){
@@ -215,17 +230,17 @@ void move_snake(Snake snake){
     int i = 0;
     gotoxy(arr[0].first,arr[0].second);
     puts(" ");
-    // for (i  = 0;i < no_of_food; i++){
-    //     if (food[i].first!=-1){
-    //         if (new_headx == food[i].first && new_heady == food[i].second){
-    //             len++;
-    //             food[i].first = food[i].second = -1;
-    //             player->score += 1;
-    //             break;
-    //         }
-    //     }
-    // }
-    if (len>snake->length)
+    for (i  = 0;i < gameinstance.num_of_food_items; i++){
+        if (gameinstance.food_items[i].first!=-1){
+            if (new_headx == gameinstance.food_items[i].first && new_heady == gameinstance.food_items[i].second){
+                len++;
+                gameinstance.food_items[i].first = gameinstance.food_items[i].second = -1;
+                snake->score += 1;
+                break;
+            }
+        }
+    }
+    if (len > snake->length)
         snake->length = len;
     else {
         for (i = 0;i < len; i++)
@@ -256,7 +271,7 @@ void check_for_collision(){
         int headx = (snake->points[len-1]).first, heady = (snake->points[len-1]).second;
         if (!snake->alive) continue;
         // collision against walls
-        if (headx == 0 || headx == WIDTH-1 || heady == 0 || heady == HEIGHT-1){
+        if (headx == 1 || headx == WIDTH || heady == 1 || heady == HEIGHT){
             status[i] = 1;
             continue;
         }
@@ -294,6 +309,15 @@ void check_for_collision(){
     }
     for (i=0;i<n;i++){
     	if (status[i]){
+            //remove_snake
+            int j;
+            Snake snake = gameinstance.snake_list + i;
+            textcolor(BLUE);
+            textbackground(WHITE);
+            for (j = 0; j < snake->length; j++){
+                gotoxy(snake->points[j].first,snake->points[j].second);
+                printf(" ");
+            }
     		gameinstance.snake_list[i].alive = 0;
     		gameinstance.num_of_live_snakes--;
     	}

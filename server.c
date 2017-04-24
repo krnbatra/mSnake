@@ -21,7 +21,7 @@
 
 
 #define MAX_PLAYERS 8
-#define FPS 5
+#define FPS 20
 const int waiting_time = 10;
 int num_of_connected_players;
 int num_of_alive_players;

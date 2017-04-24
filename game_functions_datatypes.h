@@ -1,8 +1,7 @@
 #define MAX_SNAKE_LEN 50
 #define MAX_PLAYERS 8
-#define MAX_OBSTACLES 20
-#define MAX_FOOD 20
-#define MAX_BUFFER 25
+#define NUM_OBSTACLES 20
+#define NUM_FOOD_ITEMS 20
 #define MAX_PLAYER_NAME 50
 #define HEIGHT 70
 #define WIDTH 70
@@ -36,8 +35,8 @@ typedef struct snake{
 
 typedef struct gamestate{
     Snake snake_list;
-    pair food_items[MAX_FOOD];
-    pair obstacles[MAX_OBSTACLES];
+    pair food_items[NUM_FOOD_ITEMS];
+    pair obstacles[NUM_OBSTACLES];
     int level;
     int num_of_snakes;
     int num_of_live_snakes;
