@@ -34,6 +34,7 @@ int socket_data[MAX_PLAYERS];
 char name[MAX_PLAYERS][40];
 pair obstacles[NUM_OBSTACLES];
 pair fooditems[NUM_FOOD_ITEMS];
+int flag = 0;
 
 void stop_listening(int signal){
     wait_min = 0;
@@ -49,20 +50,22 @@ void* work_sender(void *dataptr){
     }
     sleep(1);
     while (1){
-        wait_min = 1;
-        start_timer(0,1000000/FPS);
-        while (wait_min) ;
-        var = 1;
-        pthread_mutex_lock(&mutex1);
-        for (i=0;i<num_of_connected_players;i++)
-            buffer[i] = network_data[i];
-        pthread_mutex_unlock(&mutex1);
-        for (i=0;i<num_of_connected_players;i++){
-            if (!alive[i]) continue;
-            send(socket_data[i], buffer, num_of_connected_players*sizeof(char), 0);
+        while(flag == 0){
+            wait_min = 1;
+            start_timer(0,1000000/FPS);
+            while (wait_min) ;
+            var = 1;
+            pthread_mutex_lock(&mutex1);
+            for (i=0;i<num_of_connected_players;i++)
+                buffer[i] = network_data[i];
+            pthread_mutex_unlock(&mutex1);
+            for (i=0;i<num_of_connected_players;i++){
+                if (!alive[i]) continue;
+                send(socket_data[i], buffer, num_of_connected_players*sizeof(char), 0);
+            }
+            if (num_of_alive_players==0) break;
+            var = 0;
         }
-        if (num_of_alive_players==0) break;
-        var = 0;
     }
     pthread_exit(NULL);
 }
@@ -74,16 +77,20 @@ void* client_handler(void * dataptr){
     if (recv(newSocket, name[player_id], 40*sizeof(char), 0) != sizeof(char)*40){
     	perror("Name not received correctly\n");
     }
-    printf("name received %s\n", name[player_id]);
+    else    
+        printf("name received %s\n", name[player_id]);
 
     if (send(newSocket, obstacles, NUM_OBSTACLES*sizeof(pair), 0) != NUM_OBSTACLES*sizeof(pair)){
         perror("Obstacles not sent correctly\n");
     }
-    else printf("Obstacles sent correctly to %d\n",player_id);
+    else 
+        printf("Obstacles sent correctly to %d\n",player_id);
+    
     if (send(newSocket, fooditems, NUM_FOOD_ITEMS*sizeof(pair), 0) != NUM_FOOD_ITEMS*sizeof(pair)){
         perror("Food items not sent correctly\n");
     }
-    else printf("Food items sent correctly to %d\n",player_id);
+    else 
+        printf("Food items sent correctly to %d\n",player_id);
     while (wait_min) {
         sleep(1);
     }
@@ -104,6 +111,9 @@ void* client_handler(void * dataptr){
                 num_of_alive_players--;
                 printf("Player %d dead!\n", player_id);
                 break;
+            }
+            else if(move == 'P' && player_id == 0){
+                flag = !flag;
             }
             pthread_mutex_lock(&mutex1);
             network_data[player_id] = move;
