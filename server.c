@@ -117,13 +117,6 @@ void* client_handler(void * dataptr){
             else if(move == 'P' && player_id == 0){
                 flag = !flag;
             }
-            else{
-                alive[player_id] = 0;
-                num_of_alive_players--;
-                printf("Player %d got disconnected\n", player_id);
-                network_data[player_id] = 'X';
-                break;
-            }
         }
         close(newSocket);
         pthread_exit(NULL);

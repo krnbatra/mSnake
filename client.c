@@ -58,9 +58,9 @@ int main(){
     strcpy(server_ipaddress, "172.17.49.75");
     server_tcp_port_no = 8005;
     // scanf("%s %d",server_ipaddress,&server_tcp_port_no);
-    strcpy(my_ipaddress, "172.17.47.162");
+    strcpy(my_ipaddress, "172.17.49.75");
     my_tcp_port_no = 8009;
-    strcpy(name,"karan");
+    strcpy(name,"abhishek");
     // scanf("%s %d",my_ipaddress,&my_tcp_port_no);
     int i;
     my_socket = socket(AF_INET, SOCK_STREAM, 0);
