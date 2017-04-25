@@ -120,22 +120,21 @@ void draw_objects(){
     srand(time(NULL));
     int i;
     int height = HEIGHT, width = WIDTH; 
-    for (i = 0; i < gameinstance.num_of_obstacles; i++) {
-        gameinstance.obstacles[i].first = rand()%(width-2)+2;
-        gameinstance.obstacles[i].second = rand()%(height-2)+2;
-        gameinstance.food_items[i].first = rand()%(width-2)+2;
-        gameinstance.food_items[i].second = rand()%(height-2)+2;
-    }
-    textcolor(CYAN);
-    textbackground(CYAN);
+    // for (i = 0; i < gameinstance.num_of_obstacles; i++) {
+    //     gameinstance.obstacles[i].first = rand()%(width-2)+2;
+    //     gameinstance.obstacles[i].second = rand()%(height-2)+2;
+    //     gameinstance.food_items[i].first = rand()%(width-2)+2;
+    //     gameinstance.food_items[i].second = rand()%(height-2)+2;
+    // }
+    textcolor(RED);
+    // textbackground(RED);
     for (i = 0; i < gameinstance.num_of_obstacles; i++){
         if (gameinstance.obstacles[i].first == -1) continue; //consumed
         gotoxy(gameinstance.obstacles[i].first, gameinstance.obstacles[i].second);
         printf("$");
     }
-
-    textcolor(BLUE);
-    textbackground(BLUE);
+    textcolor(YELLOW);
+    // textbackground(YELLOW);
     for (i = 0; i < gameinstance.num_of_food_items; i++) {
         if (gameinstance.food_items[i].first == -1) continue; //consumed
         gotoxy(gameinstance.food_items[i].first, gameinstance.food_items[i].second);

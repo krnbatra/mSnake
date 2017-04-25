@@ -1,7 +1,5 @@
 #define MAX_SNAKE_LEN 50
 #define MAX_PLAYERS 8
-#define NUM_OBSTACLES 20
-#define NUM_FOOD_ITEMS 20
 #define MAX_PLAYER_NAME 50
 #define HEIGHT 40
 #define WIDTH 80
@@ -13,6 +11,9 @@ char right = 'd';
 char left_turn = 'j';
 char right_turn = 'k';
 typedef int color_t;
+
+const int NUM_OBSTACLES = 20;
+const int NUM_FOOD_ITEMS =  20;
 
 typedef enum direction_t{
     UP = 0, DOWN, LEFT, RIGHT

@@ -11,6 +11,7 @@
 #include <pthread.h>
 #include "utility.h"
 #include "common.h"
+#include "game_functions_datatypes.h"
 
 // typedef struct player_connection_data{
 //     char name[20];
@@ -32,6 +33,8 @@ char network_data[MAX_PLAYERS];
 int serverSocket;
 int socket_data[MAX_PLAYERS];
 char name[MAX_PLAYERS][40];
+pair obstacles[NUM_OBSTACLES];
+pair fooditems[NUM_FOOD_ITEMS];
 
 void stop_listening(int signal){
     wait_min = 0;
@@ -71,6 +74,13 @@ void* client_handler(void * dataptr){
     	perror("Name not received correctly\n");
     }
     printf("name received %s\n", name[player_id]);
+
+    if (send(newSocket, obstacles, NUM_OBSTACLES*sizeof(pair), 0) != NUM_OBSTACLES*sizeof(pair)){
+        perror("Obstacles not sent correctly\n");
+    }
+    if (send(newSocket, fooditems, NUM_FOOD_ITEMS*sizeof(pair), 0) != NUM_FOOD_ITEMS*sizeof(pair)){
+        perror("Food items not sent correctly\n");
+    }
     while (wait_min) {
         sleep(1);
     }
@@ -111,10 +121,18 @@ void* client_handler(void * dataptr){
 
 
 int main(){
+    int i;
+    int height = HEIGHT, width = WIDTH;
+    for (i = 0; i < NUM_OBSTACLES; i++) {
+        obstacles[i].first = rand()%(width-2)+2;
+        obstacles[i].second = rand()%(height-2)+2;
+        fooditems[i].first = rand()%(width-2)+2;
+        fooditems[i].second = rand()%(height-2)+2;
+    }
     printf("Enter server's IP Address : \n");
     char my_ip_address[40];
     //scanf("%s",my_ip_address);
-    strcpy(my_ip_address, "172.17.49.75");
+    strcpy(my_ip_address, "192.168.43.32");
     int tcp_port_no;
     printf("Enter my TCP port no : \n");
     //scanf("%d",&tcp_port_no);
@@ -128,7 +146,6 @@ int main(){
         exit(2);
     }
     pthread_t tid[MAX_PLAYERS];
-    int i;
     wait_min = 1;
     signal_bind_wrapper(SIGALRM, stop_listening);
     printf("Listening for players\n");

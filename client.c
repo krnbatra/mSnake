@@ -13,9 +13,11 @@
 #include "common.h"
 #include "utility.h"
 #include "game_functions.h"
+// #include "game_functions_datatypes.h"
 
 
 #define MAX_PLAYERS 8
+
 // typedef struct player_connection_data{
 //     char name[20];
 //     char ipaddr[20];
@@ -39,6 +41,10 @@ int my_udp_port_no;
 int my_id;
 int status;
 int rstatus;
+struct gamestate;
+extern struct gamestate gameinstance;
+extern int NUM_OBSTACLES;
+extern int NUM_FOOD_ITEMS;
 
 void * sender_work(void * data){
     char c;
@@ -53,12 +59,12 @@ void * sender_work(void * data){
 
 int main(){
     printf("Enter server IP address - TCP PORT \n");
-    strcpy(server_ipaddress, "172.17.49.75");
+    strcpy(server_ipaddress, "192.168.43.32");
     server_tcp_port_no = 8005;
     // scanf("%s %d",server_ipaddress,&server_tcp_port_no);
-    strcpy(my_ipaddress, "172.17.49.75");
+    strcpy(my_ipaddress, "192.168.43.32");
     my_tcp_port_no = 8009;
-    strcpy(name,"abhishek");
+    strcpy(name,"karan");
     // scanf("%s %d",my_ipaddress,&my_tcp_port_no);
     int i;
     my_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -78,6 +84,16 @@ int main(){
     if (recv(my_socket, temp, 40*MAX_PLAYERS*sizeof(char), 0) != MAX_PLAYERS*sizeof(char)*40){
     	perror("Name not received correctly\n");
     }
+
+    if (recv(my_socket, gameinstance.obstacles, NUM_OBSTACLES*sizeof(pair), 0) != NUM_OBSTACLES*sizeof(pair)){
+        perror("Obstacles not received correctly\n");
+    }
+
+    if (recv(my_socket, gameinstance.food_items, NUM_FOOD_ITEMS*sizeof(pair), 0) != NUM_FOOD_ITEMS*sizeof(pair)){
+        perror("Food Items not received correctly\n");
+    }
+
+
     if ((nr = recv(my_socket, arr, 2*sizeof(int), 0)) != 2*sizeof(int)){
         printf("Bytes received : %lu\n", nr);
         perror("ERROR in receiving"); 
