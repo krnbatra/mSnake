@@ -77,18 +77,23 @@ int main(){
     char * temp = (char*)malloc(sizeof(char)*40*MAX_PLAYERS);
     for (i=0;i<MAX_PLAYERS;i++)
     	names[i] = (char*)&temp[i*40];
-    if (recv(my_socket, temp, 40*MAX_PLAYERS*sizeof(char), 0) != MAX_PLAYERS*sizeof(char)*40){
-    	perror("Name not received correctly\n");
-    }
+
+
+    // printf("Name received correctly\n");
 
     if (recv(my_socket, gameinstance.obstacles, NUM_OBSTACLES*sizeof(pair), 0) != NUM_OBSTACLES*sizeof(pair)){
         perror("Obstacles not received correctly\n");
     }
 
+    printf("Obstacles received correctly\n");
+
     if (recv(my_socket, gameinstance.food_items, NUM_FOOD_ITEMS*sizeof(pair), 0) != NUM_FOOD_ITEMS*sizeof(pair)){
         perror("Food Items not received correctly\n");
     }
 
+    if (recv(my_socket, temp, 40*MAX_PLAYERS*sizeof(char), 0) != MAX_PLAYERS*sizeof(char)*40){
+        perror("Name not received correctly\n");
+    }
 
     if ((nr = recv(my_socket, arr, 2*sizeof(int), 0)) != 2*sizeof(int)){
         printf("Bytes received : %lu\n", nr);

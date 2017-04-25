@@ -66,6 +66,8 @@ void initialize_game(int num_of_players, char **names){
             (gameinstance.snake_list[i].points)[j].second = 5*i+5;
         }
     }
+    // gameinstance.num_of_obstacles = NUM_OBSTACLES;
+    // gameinstance.num_of_food_items = NUM_FOOD_ITEMS;
     draw_game_state(gameinstance);
 }
 
