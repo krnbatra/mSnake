@@ -51,6 +51,7 @@ void initialize_game(int num_of_players, char **names){
     }
     int i,j;
     gameinstance.num_of_snakes = num_of_players;
+    gameinstance.num_of_live_snakes = num_of_players;
     gameinstance.snake_list = (Snake)calloc(num_of_players, sizeof(snake_t));
     for(i = 0; i < num_of_players; i++){
         gameinstance.snake_list[i].length = 10;
@@ -318,14 +319,19 @@ void check_for_collision(){
             //remove_snake
             int j;
             Snake snake = gameinstance.snake_list + i;
-            textcolor(BLUE);
-            textbackground(WHITE);
+            textattr(RESETATTR);
             for (j = 0; j < snake->length; j++){
                 gotoxy(snake->points[j].first,snake->points[j].second);
                 printf(" ");
             }
-    		gameinstance.snake_list[i].alive = 0;
-    		gameinstance.num_of_live_snakes--;
+            gameinstance.snake_list[i].alive = 0;
+            gameinstance.num_of_live_snakes--;
+            if (gameinstance.num_of_live_snakes == 0){
+                clrscr();
+                system("stty sane");
+                printf("Game over!\n");
+                exit(0);
+            }
     	}
     }
 }
@@ -344,7 +350,7 @@ void display_leaderboard(){
        j = i-1;
        stemp = score[i];
        temp = names[i];
-       while (j>=0 && score[j]>stemp){
+       while (j>=0 && score[j]<stemp){
            names[j+1] = names[j];
            score[j+1] = score[j];
            j--;

@@ -14,7 +14,6 @@
 #include "utility.h"
 #include "game_functions.h"
 #include "game_functions_datatypes.h"
-// #include "game_functions_datatypes.h"
 
 // typedef struct player_connection_data{
 //     char name[20];
@@ -53,12 +52,30 @@ void * sender_work(void * data){
     }
 }
 
+void * level_up(void *data){
+    int level = 1;
+    int i;
+    while (1){
+        textcolor(BLUE);
+        textbackground(YELLOW);
+        gotoxy(WIDTH+3, num_of_connected_players+4);
+        printf("LEVEL : 3");
+        for (i=0;i<10;i++){
+            textcolor(BLUE);
+            textbackground(WHITE);
+            gotoxy(WIDTH+4, num_of_connected_players+4);
+            printf("Next level in %d seconds\n", 10-i);
+            sleep(1);
+        }
+    }
+}
+
 int main(){
     printf("Enter server IP address - TCP PORT \n");
-    strcpy(server_ipaddress, "172.17.49.75");
+    strcpy(server_ipaddress, "192.168.43.253");
     server_tcp_port_no = 8005;
     // scanf("%s %d",server_ipaddress,&server_tcp_port_no);
-    strcpy(my_ipaddress, "172.17.49.75");
+    strcpy(my_ipaddress, "192.168.43.253");
     my_tcp_port_no = 8009;
     strcpy(name,"abhishek");
     // scanf("%s %d",my_ipaddress,&my_tcp_port_no);
@@ -111,8 +128,9 @@ int main(){
 
     network_data = (char*)calloc(num_of_connected_players,sizeof(char));
     initialize_game(num_of_connected_players, names);
-    pthread_t sender_thread;
+    pthread_t sender_thread, level;
     pthread_create(&sender_thread, NULL, sender_work, NULL);
+    pthread_create(&level, NULL, level_up, NULL);
     while (1){
         if(recv(my_socket, network_data, num_of_connected_players*sizeof(char), 0) != sizeof(char)*num_of_connected_players){
             perror("Data received incorrectly!");

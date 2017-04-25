@@ -20,7 +20,8 @@
 // } player_connection_data, *player_connection_data;
 
 //Player with ID 0 is the controller of the server
-#define FPS 10
+//#define FPS 10
+int FPS = 10;
 const int waiting_time = 10;
 int num_of_connected_players;
 int num_of_alive_players;
@@ -117,62 +118,76 @@ void* client_handler(void * dataptr){
                 flag = !flag;
             }
         }
+        else {
+            alive[player_id] = 1;
+            printf("Game closed at player %d\n", player_id);
+            num_of_alive_players--;
+            break;
+        }
     }
     close(newSocket);
     pthread_exit(NULL);
 }
 
+void * level_handler(void * dataptr){
+    int i = 0;
+    while (1){
+        sleep(10);
+        FPS += FPS/10;
+    }
+}
 
 int main(){
-        int i;
-        srand(time(NULL));
-        int height = HEIGHT, width = WIDTH;
-        for (i = 0; i < NUM_OBSTACLES; i++) {
-            obstacles[i].first = rand()%(width-2)+2;
-            obstacles[i].second = rand()%(height-2)+2;
-            fooditems[i].first = rand()%(width-2)+2;
-            fooditems[i].second = rand()%(height-2)+2;
-        }
-        printf("Enter server's IP Address : \n");
-        char my_ip_address[40];
-        //scanf("%s",my_ip_address);
-        strcpy(my_ip_address, "172.17.49.75");
-        int tcp_port_no;
-        printf("Enter my TCP port no : \n");
-        //scanf("%d",&tcp_port_no);
-        tcp_port_no = 8005;
-        serverSocket = 0;
-        int newSocket = 0;
-        serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-        int status = bind_wrapper(serverSocket, my_ip_address, tcp_port_no, 1);
-        if (listen( serverSocket, 3)) {
-            perror("Some problem in listen\n");
-            exit(2);
-        }
-        pthread_t tid[MAX_PLAYERS];
-        wait_min = 1;
-        signal_bind_wrapper(SIGALRM, stop_listening);
-        printf("Listening for players\n");
-        start_timer(waiting_time, 0);
-        for (i = 0; i < MAX_PLAYERS && wait_min; i++){
-            newSocket = accept(serverSocket,NULL,NULL);
-            socket_data[num_of_connected_players] = newSocket;
-            printf("Assigned socket %d to %d", newSocket, num_of_connected_players);
-            alive[num_of_connected_players] = 1;
-            if (newSocket != -1){
-                int *arr = (int*)malloc(sizeof(int)*2);
-                arr[0] = newSocket; arr[1] = num_of_connected_players++;
-                pthread_create(&tid[i], NULL, client_handler,arr);
-            }
-        }
-        printf("Number of connected players : %d\n", num_of_connected_players);
-        num_of_alive_players = num_of_connected_players;
-        pthread_t sender;
-        pthread_create(&sender, NULL, work_sender, NULL);
-        for (i = 0; i < num_of_connected_players; i++)
-            pthread_join(tid[i], NULL);
-        pthread_join(sender, NULL);
-        printf("Game over!\n");
-        close(serverSocket);
-        return 0;
+    int i;
+    srand(time(NULL));
+    int height = HEIGHT, width = WIDTH;
+    for (i = 0; i < NUM_OBSTACLES; i++) {
+        obstacles[i].first = rand()%(width-2)+2;
+        obstacles[i].second = rand()%(height-2)+2;
+        fooditems[i].first = rand()%(width-2)+2;
+        fooditems[i].second = rand()%(height-2)+2;
     }
+    printf("Enter server's IP Address : \n");
+    char my_ip_address[40];
+    //scanf("%s",my_ip_address);
+    strcpy(my_ip_address, "192.168.43.253");
+    int tcp_port_no;
+    printf("Enter my TCP port no : \n");
+    //scanf("%d",&tcp_port_no);
+    tcp_port_no = 8005;
+    serverSocket = 0;
+    int newSocket = 0;
+    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    int status = bind_wrapper(serverSocket, my_ip_address, tcp_port_no, 1);
+    if (listen( serverSocket, 3)) {
+        perror("Some problem in listen\n");
+        exit(2);
+    }
+    pthread_t tid[MAX_PLAYERS];
+    wait_min = 1;
+    signal_bind_wrapper(SIGALRM, stop_listening);
+    printf("Listening for players\n");
+    start_timer(waiting_time, 0);
+    for (i = 0; i < MAX_PLAYERS && wait_min; i++){
+        newSocket = accept(serverSocket,NULL,NULL);
+        socket_data[num_of_connected_players] = newSocket;
+        printf("Assigned socket %d to %d", newSocket, num_of_connected_players);
+        alive[num_of_connected_players] = 1;
+        if (newSocket != -1){
+            int *arr = (int*)malloc(sizeof(int)*2);
+            arr[0] = newSocket; arr[1] = num_of_connected_players++;
+            pthread_create(&tid[i], NULL, client_handler,arr);
+        }
+    }
+    printf("Number of connected players : %d\n", num_of_connected_players);
+    num_of_alive_players = num_of_connected_players;
+    pthread_t sender,level;
+    pthread_create(&sender, NULL, work_sender, NULL);
+    pthread_create(&level, NULL, level_handler, NULL);
+    for (i = 0; i < num_of_connected_players; i++)
+        pthread_join(tid[i], NULL);
+    pthread_join(sender, NULL);
+    printf("Game over!\n");
+    close(serverSocket);
+    return 0;
+}
