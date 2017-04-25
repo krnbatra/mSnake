@@ -20,8 +20,6 @@
 // } player_connection_data, *player_connection_data;
 
 //Player with ID 0 is the controller of the server
-
-#define MAX_PLAYERS 8
 #define FPS 10
 const int waiting_time = 10;
 int num_of_connected_players;

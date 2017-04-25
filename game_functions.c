@@ -3,6 +3,7 @@
 #include <time.h>
 #include "game_functions_datatypes.h"
 #include "conio.h"
+#include "common.h"
 
 
 // typedef struct gamestate{
@@ -21,6 +22,13 @@
 //     direction_t dir;
 //     int alive;
 // }snake_t, *Snake;
+char up = 'w';
+char left = 'a';
+char down = 's';
+char right = 'd';
+char left_turn = 'j';
+char right_turn = 'k';
+typedef int color_t;
 
 void initialize_game(int num_of_players, char ** name);
 void draw_game_state();
@@ -119,13 +127,7 @@ void draw_snake(Snake snake){
 void draw_objects(){
     srand(time(NULL));
     int i;
-    int height = HEIGHT, width = WIDTH; 
-    // for (i = 0; i < gameinstance.num_of_obstacles; i++) {
-    //     gameinstance.obstacles[i].first = rand()%(width-2)+2;
-    //     gameinstance.obstacles[i].second = rand()%(height-2)+2;
-    //     gameinstance.food_items[i].first = rand()%(width-2)+2;
-    //     gameinstance.food_items[i].second = rand()%(height-2)+2;
-    // }
+
     textcolor(RED);
     // textbackground(RED);
     for (i = 0; i < gameinstance.num_of_obstacles; i++){

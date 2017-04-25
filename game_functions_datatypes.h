@@ -1,19 +1,10 @@
+#ifndef GAME_FUNCTIONS_DATATYPES_H
+#define GAME_FUNCTIONS_DATATYPES_H
+#include "common.h"
 #define MAX_SNAKE_LEN 50
-#define MAX_PLAYERS 8
-#define MAX_PLAYER_NAME 50
-#define HEIGHT 40
-#define WIDTH 80
 
-char up = 'w';
-char left = 'a';
-char down = 's';
-char right = 'd';
-char left_turn = 'j';
-char right_turn = 'k';
-typedef int color_t;
 
-const int NUM_OBSTACLES = 20;
-const int NUM_FOOD_ITEMS =  20;
+
 
 typedef enum direction_t{
     UP = 0, DOWN, LEFT, RIGHT
@@ -26,7 +17,7 @@ typedef struct pair{
 
 typedef struct snake{
     pair points[MAX_SNAKE_LEN]; 
-    color_t length;
+    int length;
     int color;
     direction_t dir;
     int alive;
@@ -46,3 +37,4 @@ typedef struct gamestate{
     int num_of_obstacles;
 }gamestate, *Gamestate;
 
+#endif

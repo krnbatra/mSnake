@@ -13,10 +13,8 @@
 #include "common.h"
 #include "utility.h"
 #include "game_functions.h"
+#include "game_functions_datatypes.h"
 // #include "game_functions_datatypes.h"
-
-
-#define MAX_PLAYERS 8
 
 // typedef struct player_connection_data{
 //     char name[20];
@@ -41,10 +39,8 @@ int my_udp_port_no;
 int my_id;
 int status;
 int rstatus;
-struct gamestate;
+
 extern struct gamestate gameinstance;
-extern int NUM_OBSTACLES;
-extern int NUM_FOOD_ITEMS;
 
 void * sender_work(void * data){
     char c;
