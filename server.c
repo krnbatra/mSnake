@@ -52,17 +52,17 @@ void* work_sender(void *dataptr){
         wait_min = 1;
         start_timer(0,1000000/FPS);
         while (wait_min) ;
-        var = 1;
         pthread_mutex_lock(&mutex1);
         for (i=0;i<num_of_connected_players;i++)
             buffer[i] = network_data[i];
         pthread_mutex_unlock(&mutex1);
+        int j;
         for (i=0;i<num_of_connected_players;i++){
+            printf("Sent to player %d over socket %d\n", i, socket_data[i]);
             if (!alive[i]) continue;
-            send(socket_data[i], buffer, num_of_connected_players*sizeof(char), 0);
+                send(socket_data[i], buffer, num_of_connected_players*sizeof(char), 0);
         }
         if (num_of_alive_players==0) break;
-        var = 0;
     }
     pthread_exit(NULL);
 }
@@ -74,8 +74,7 @@ void* client_handler(void * dataptr){
     if (recv(newSocket, name[player_id], 40*sizeof(char), 0) != sizeof(char)*40){
     	perror("Name not received correctly\n");
     }
-    printf("name received %s\n", name[player_id]);
-
+    else printf("Name received %s\n", name[player_id]);
     if (send(newSocket, obstacles, NUM_OBSTACLES*sizeof(pair), 0) != NUM_OBSTACLES*sizeof(pair)){
         perror("Obstacles not sent correctly\n");
     }
@@ -99,20 +98,21 @@ void* client_handler(void * dataptr){
     while (1){
         if (recv(newSocket, &move, sizeof(char), 0) == sizeof(char)){    	
             printf("Received move from %d : %d/%c\n", player_id, move, move);
-            if (move == 'X'){
-                alive[player_id] = 0;
-                num_of_alive_players--;
-                printf("Player %d dead!\n", player_id);
-                break;
-            }
             pthread_mutex_lock(&mutex1);
             network_data[player_id] = move;
             pthread_mutex_unlock(&mutex1);
+            if (move == 'X'){
+                alive[player_id] = 0;
+                num_of_alive_players--;
+                printf("Player %d quit!\n", player_id);
+                break;
+            }
         }
         else{
             alive[player_id] = 0;
             num_of_alive_players--;
             printf("Player %d got disconnected\n", player_id);
+            network_data[player_id] = 'X';
             break;
         }
     }
