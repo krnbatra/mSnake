@@ -133,7 +133,7 @@ void * level_handler(void * dataptr){
     int i = 0;
     while (1){
         sleep(10);
-        FPS += FPS/10;
+        FPS += FPS/5;
     }
 }
 
@@ -149,11 +149,8 @@ int main(){
     }
     printf("Enter server's IP Address : \n");
     char my_ip_address[40];
-    //scanf("%s",my_ip_address);
-    strcpy(my_ip_address, "192.168.43.253");
+    scanf("%s",my_ip_address);
     int tcp_port_no;
-    printf("Enter my TCP port no : \n");
-    //scanf("%d",&tcp_port_no);
     tcp_port_no = 8005;
     serverSocket = 0;
     int newSocket = 0;

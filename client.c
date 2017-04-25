@@ -57,28 +57,29 @@ void * level_up(void *data){
     int i;
     while (1){
         textcolor(BLUE);
-        textbackground(YELLOW);
-        gotoxy(WIDTH+3, num_of_connected_players+4);
-        printf("LEVEL : 3");
+        textbackground(WHITE);
+        gotoxy(WIDTH+3, num_of_connected_players+20);
+        printf("LEVEL : %d\n",level);
         for (i=0;i<10;i++){
             textcolor(BLUE);
             textbackground(WHITE);
-            gotoxy(WIDTH+4, num_of_connected_players+4);
+            gotoxy(WIDTH+4, num_of_connected_players+22);
             printf("Next level in %d seconds\n", 10-i);
             sleep(1);
         }
+        level++;
     }
 }
 
 int main(){
-    printf("Enter server IP address - TCP PORT \n");
-    strcpy(server_ipaddress, "192.168.43.253");
+    printf("Enter server IP address\n");
     server_tcp_port_no = 8005;
-    // scanf("%s %d",server_ipaddress,&server_tcp_port_no);
-    strcpy(my_ipaddress, "192.168.43.253");
+    scanf("%s",server_ipaddress);
+    printf("Enter your IP address\n");
+    scanf("%s",my_ipaddress);
     my_tcp_port_no = 8009;
-    strcpy(name,"abhishek");
-    // scanf("%s %d",my_ipaddress,&my_tcp_port_no);
+    printf("Enter your name:\n");
+    scanf("%s", name);
     int i;
     my_socket = socket(AF_INET, SOCK_STREAM, 0);
     bind_wrapper(my_socket, my_ipaddress, my_tcp_port_no, 1);

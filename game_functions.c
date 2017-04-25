@@ -91,7 +91,7 @@ void draw_game_state(){
         textattr (RESETATTR);
         textcolor (WHITE);
         for (j = 2; j < width; j++)
-           printf (" ");
+            printf (" ");
         textcolor (BLUE);
         textbackground (CYAN);
         printf ("|");
@@ -114,9 +114,14 @@ void draw_snake(Snake snake){
     int i;
     struct pair* arr = snake->points;
     textbackground (snake->color);
-    for (i = 0; i < len-1; i++){
+    int upto = strlen(snake->name);
+    for (i = 0; i < upto; i++){
         gotoxy(arr[i].first, arr[i].second);
-        printf(" ");
+        printf("%c",snake->name[i]);
+    }
+    for (i=upto;i<len;i++){
+        gotoxy(arr[i].first, arr[i].second);
+        puts(" ");
     }
     textattr(RESETATTR);
     gotoxy(arr[len-1].first, arr[len-1].second);
@@ -285,6 +290,10 @@ void check_for_collision(){
         // collision against obstacles
         for (j = 0;j < gameinstance.num_of_obstacles; j++){
             if (gameinstance.obstacles[j].first == headx && gameinstance.obstacles[j].second == heady){
+                textcolor(RED);
+                textbackground(RED);
+                gotoxy(gameinstance.obstacles[j].first,gameinstance.obstacles[j].second);
+                puts(" ");
                 status[i] = 1;
                 break;
             }
@@ -315,7 +324,7 @@ void check_for_collision(){
         }
     }
     for (i=0;i<n;i++){
-    	if (status[i]){
+        if (status[i]){
             //remove_snake
             int j;
             Snake snake = gameinstance.snake_list + i;
@@ -330,9 +339,16 @@ void check_for_collision(){
                 clrscr();
                 system("stty sane");
                 printf("Game over!\n");
+                char * name = gameinstance.snake_list[0].name;
+                int score = gameinstance.snake_list[0].score;
+                j=1;
+                for (j=1;j<gameinstance.num_of_snakes;i++){
+                    if (gameinstance.snake_list[i].score > score) {score = gameinstance.snake_list[i].score; name = gameinstance.snake_list[i].name;}
+                }
+                printf("Player %s won the game\n", name);
                 exit(0);
             }
-    	}
+        }
     }
 }
 
@@ -347,16 +363,16 @@ void display_leaderboard(){
     char * temp;
     int stemp;
     for (i=1;i<gameinstance.num_of_snakes;i++){
-       j = i-1;
-       stemp = score[i];
-       temp = names[i];
-       while (j>=0 && score[j]<stemp){
-           names[j+1] = names[j];
-           score[j+1] = score[j];
-           j--;
-       }
-       score[j+1] = stemp;
-       names[j+1] = temp;
+        j = i-1;
+        stemp = score[i];
+        temp = names[i];
+        while (j>=0 && score[j]<stemp){
+            names[j+1] = names[j];
+            score[j+1] = score[j];
+            j--;
+        }
+        score[j+1] = stemp;
+        names[j+1] = temp;
     }
     textcolor(RED);
     textbackground(YELLOW);
