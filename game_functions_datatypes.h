@@ -30,6 +30,7 @@ typedef struct snake{
     direction_t dir;
     int alive;
     int score;
+    char *name;
 }snake_t, *Snake;
 
 

@@ -21,9 +21,8 @@
 //     direction_t dir;
 //     int alive;
 // }snake_t, *Snake;
-extern char name[40];
 
-void initialize_game(int num_of_players);
+void initialize_game(int num_of_players, char ** name);
 void draw_game_state();
 void check_for_collision();
 void draw_snake(Snake snake);
@@ -37,7 +36,7 @@ extern int my_id;
 
 gamestate gameinstance;
 
-void initialize_game(int num_of_players){
+void initialize_game(int num_of_players, char **names){
     if (WEXITSTATUS(system("stty cbreak -echo"))){
         printf("Failed setting up the screen, is 'stty' missing?");
         exit(0);
@@ -50,6 +49,10 @@ void initialize_game(int num_of_players){
         gameinstance.snake_list[i].length = 10;
         gameinstance.snake_list[i].color = WHITE;
         gameinstance.snake_list[i].alive = 1;
+        gameinstance.snake_list[i].dir = RIGHT;
+        printf("Name here is %s\n", names[i]);
+        gameinstance.snake_list[i].name = names[i];
+        printf("Name copied : %s\n", gameinstance.snake_list[i].name);
         for(j = 0; j < gameinstance.snake_list[i].length ; j++){
             (gameinstance.snake_list[i].points)[j].first = j+5;
             (gameinstance.snake_list[i].points)[j].second = 5*i+5;
@@ -337,15 +340,15 @@ void display_leaderboard(){
             }
         }
     }
-    gotoxy(WIDTH, 1);
+    gotoxy(WIDTH+1, 1);
     textcolor(RED);
     textbackground(YELLOW);
-    printf("%5s %15s %5s\n", "RANK", "NAME", "SCORE");
+    printf("%-4s | %-10s | %-5s\n", "RANK", "NAME", "SCORE");
     for(i = 0; i < gameinstance.num_of_snakes; i++){
         gotoxy(WIDTH+1, i+2);
         textcolor(RED);
         textbackground(YELLOW);
-        printf("%5d %15s %5d\n", i+1,name, gameinstance.snake_list[i].score);
+        printf("%-4d | %-10s | %-5d\n", i+1,gameinstance.snake_list[i].name, gameinstance.snake_list[i].score);
     }
     textattr(RESETATTR);
 }

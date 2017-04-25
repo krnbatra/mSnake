@@ -14,6 +14,8 @@
 #include "utility.h"
 #include "game_functions.h"
 
+
+#define MAX_PLAYERS 8
 // typedef struct player_connection_data{
 //     char name[20];
 //     char ipaddr[20];
@@ -29,6 +31,7 @@ char *network_data;
 char server_ipaddress[40];
 char my_ipaddress[40];
 char name[40];
+char **names;
 int server_tcp_port_no ;
 int server_udp_port_no;
 int my_tcp_port_no;
@@ -54,10 +57,10 @@ int main(){
     server_tcp_port_no = 8005;
     // scanf("%s %d",server_ipaddress,&server_tcp_port_no);
     strcpy(my_ipaddress, "172.17.49.75");
-    my_tcp_port_no = 8008;
+    my_tcp_port_no = 8009;
     strcpy(name,"abhishek");
     // scanf("%s %d",my_ipaddress,&my_tcp_port_no);
-
+    int i;
     my_socket = socket(AF_INET, SOCK_STREAM, 0);
     bind_wrapper(my_socket, my_ipaddress, my_tcp_port_no, 1);
     connect_wrapper(my_socket, server_ipaddress, server_tcp_port_no);
@@ -68,19 +71,28 @@ int main(){
     	perror("Error in sending name\n");
     	return 1;
     }
+    names = (char**)malloc(MAX_PLAYERS*sizeof(char*));
+    char * temp = (char*)malloc(sizeof(char)*40*MAX_PLAYERS);
+    for (i=0;i<MAX_PLAYERS;i++)
+    	names[i] = (char*)&temp[i*40];
+    if (recv(my_socket, temp, 40*MAX_PLAYERS*sizeof(char), 0) != MAX_PLAYERS*sizeof(char)*40){
+    	perror("Name not received correctly\n");
+    }
     if ((nr = recv(my_socket, arr, 2*sizeof(int), 0)) != 2*sizeof(int)){
         printf("Bytes received : %lu\n", nr);
         perror("ERROR in receiving"); 
         return 1;
     }
     int num_of_connected_players = arr[0];
+    for (i=0;i<num_of_connected_players;i++)
+        printf("Received name : %s\n", names[i]);
     int my_id = arr[1];
     printf("Number of connected players: %d\n", num_of_connected_players);
     printf("Assigned ID : %d\n", my_id);
 
 
     network_data = (char*)calloc(num_of_connected_players,sizeof(char));
-    initialize_game(num_of_connected_players);
+    initialize_game(num_of_connected_players, names);
     pthread_t sender_thread;
     pthread_create(&sender_thread, NULL, sender_work, NULL);
     while (1){

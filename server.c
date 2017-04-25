@@ -31,7 +31,7 @@ int alive[MAX_PLAYERS];
 char network_data[MAX_PLAYERS];
 int serverSocket;
 int socket_data[MAX_PLAYERS];
-char name[40];
+char name[MAX_PLAYERS][40];
 
 void stop_listening(int signal){
     wait_min = 0;
@@ -63,14 +63,18 @@ void* client_handler(void * dataptr){
     int *arr = (int*)dataptr;
     int newSocket = arr[0];
     int player_id = arr[1];
+    if (recv(newSocket, name[player_id], 40*sizeof(char), 0) != sizeof(char)*40){
+    	perror("Name not received correctly\n");
+    }
+    printf("name received %s\n", name[player_id]);
     while (wait_min) {
         sleep(1);
     }
     arr[0] = num_of_connected_players;
     arr[1] = player_id;
     size_t ns;
-    if (recv(newSocket, name, 40*sizeof(char), 0) != sizeof(char)*40){
-    	perror("Name not received correctly\n");
+    if (send(newSocket, name, 40*MAX_PLAYERS*sizeof(char), 0) != MAX_PLAYERS*sizeof(char)*40){
+    	perror("Name not sent correctly\n");
     }
     if (send(newSocket, arr, 2*sizeof(int), 0) != 2*sizeof(int))
         perror("Failed in sending information\n");
