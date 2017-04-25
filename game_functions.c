@@ -50,7 +50,6 @@ void initialize_game(int num_of_players, char **names){
         exit(0);
     }
     int i,j;
-    memset(&gameinstance, 0, sizeof(gamestate));
     gameinstance.num_of_snakes = num_of_players;
     gameinstance.snake_list = (Snake)calloc(num_of_players, sizeof(snake_t));
     for(i = 0; i < num_of_players; i++){
@@ -66,8 +65,9 @@ void initialize_game(int num_of_players, char **names){
             (gameinstance.snake_list[i].points)[j].second = 5*i+5;
         }
     }
-    // gameinstance.num_of_obstacles = NUM_OBSTACLES;
-    // gameinstance.num_of_food_items = NUM_FOOD_ITEMS;
+    gameinstance.num_of_obstacles = NUM_OBSTACLES;
+    gameinstance.num_of_food_items = NUM_FOOD_ITEMS;
+    printf("%d %d\n", gameinstance.num_of_obstacles, gameinstance.num_of_food_items);
     draw_game_state(gameinstance);
 }
 
@@ -105,8 +105,6 @@ void draw_game_state(){
     textattr(RESETATTR);
     for (i = 0; i < gameinstance.num_of_snakes; i++)
         draw_snake(gameinstance.snake_list+i);
-    gameinstance.num_of_obstacles = NUM_OBSTACLES;
-    gameinstance.num_of_food_items = NUM_FOOD_ITEMS;
     draw_objects();
 }
 
@@ -131,14 +129,14 @@ void draw_objects(){
     int i;
 
     textcolor(RED);
-    // textbackground(RED);
+    textbackground(RED);
     for (i = 0; i < gameinstance.num_of_obstacles; i++){
         if (gameinstance.obstacles[i].first == -1) continue; //consumed
         gotoxy(gameinstance.obstacles[i].first, gameinstance.obstacles[i].second);
         printf("$");
     }
     textcolor(YELLOW);
-    // textbackground(YELLOW);
+    textbackground(YELLOW);
     for (i = 0; i < gameinstance.num_of_food_items; i++) {
         if (gameinstance.food_items[i].first == -1) continue; //consumed
         gotoxy(gameinstance.food_items[i].first, gameinstance.food_items[i].second);

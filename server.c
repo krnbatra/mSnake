@@ -76,9 +76,11 @@ void* client_handler(void * dataptr){
     if (send(newSocket, obstacles, NUM_OBSTACLES*sizeof(pair), 0) != NUM_OBSTACLES*sizeof(pair)){
         perror("Obstacles not sent correctly\n");
     }
+    else printf("Obstacles sent correctly to %d\n",player_id);
     if (send(newSocket, fooditems, NUM_FOOD_ITEMS*sizeof(pair), 0) != NUM_FOOD_ITEMS*sizeof(pair)){
         perror("Food items not sent correctly\n");
     }
+    else printf("Food items sent correctly to %d\n",player_id);
     while (wait_min) {
         sleep(1);
     }
@@ -130,7 +132,7 @@ int main(){
     printf("Enter server's IP Address : \n");
     char my_ip_address[40];
     //scanf("%s",my_ip_address);
-    strcpy(my_ip_address, "192.168.43.32");
+    strcpy(my_ip_address, "172.17.49.75");
     int tcp_port_no;
     printf("Enter my TCP port no : \n");
     //scanf("%d",&tcp_port_no);

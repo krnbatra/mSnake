@@ -55,12 +55,12 @@ void * sender_work(void * data){
 
 int main(){
     printf("Enter server IP address - TCP PORT \n");
-    strcpy(server_ipaddress, "192.168.43.32");
+    strcpy(server_ipaddress, "172.17.49.75");
     server_tcp_port_no = 8005;
     // scanf("%s %d",server_ipaddress,&server_tcp_port_no);
-    strcpy(my_ipaddress, "192.168.43.32");
+    strcpy(my_ipaddress, "172.17.49.75");
     my_tcp_port_no = 8009;
-    strcpy(name,"karan");
+    strcpy(name,"abhishek");
     // scanf("%s %d",my_ipaddress,&my_tcp_port_no);
     int i;
     my_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -90,23 +90,24 @@ int main(){
     if (recv(my_socket, gameinstance.food_items, NUM_FOOD_ITEMS*sizeof(pair), 0) != NUM_FOOD_ITEMS*sizeof(pair)){
         perror("Food Items not received correctly\n");
     }
+    printf("Food items received correctly\n");
+    //for (i=0;i<NUM_FOOD_ITEMS;i++)
+     //   printf("%d %d\n",gameinstance.food_items[i].first,gameinstance.food_items[i].second);
 
     if (recv(my_socket, temp, 40*MAX_PLAYERS*sizeof(char), 0) != MAX_PLAYERS*sizeof(char)*40){
         perror("Name not received correctly\n");
     }
-
+    else printf("Names received correctly\n");
     if ((nr = recv(my_socket, arr, 2*sizeof(int), 0)) != 2*sizeof(int)){
-        printf("Bytes received : %lu\n", nr);
-        perror("ERROR in receiving"); 
         return 1;
     }
+    else printf("array received correctly\n");
     int num_of_connected_players = arr[0];
+    printf("Number of connected players: %d\n", num_of_connected_players);
     for (i=0;i<num_of_connected_players;i++)
         printf("Received name : %s\n", names[i]);
     int my_id = arr[1];
-    printf("Number of connected players: %d\n", num_of_connected_players);
     printf("Assigned ID : %d\n", my_id);
-
 
     network_data = (char*)calloc(num_of_connected_players,sizeof(char));
     initialize_game(num_of_connected_players, names);
