@@ -332,24 +332,35 @@ void check_for_collision(){
 
 void display_leaderboard(){
     int i, j;
-    for(i = 0; i < gameinstance.num_of_snakes; i++){
-        for(j = 0; j < gameinstance.num_of_snakes-1; j++){
-            if(gameinstance.snake_list[i].score < gameinstance.snake_list[j+1].score){
-                snake_t temp = gameinstance.snake_list[j];
-                gameinstance.snake_list[j] = gameinstance.snake_list[j+1];
-                gameinstance.snake_list[j+1] = temp;
-            }
-        }
+    char **names = (char**)calloc(gameinstance.num_of_snakes,sizeof(char*));
+    int *score = (int*)calloc(gameinstance.num_of_snakes,sizeof(int));
+    for (i=0;i<gameinstance.num_of_snakes;i++)
+        names[i] = gameinstance.snake_list[i].name;
+    for (i=0;i<gameinstance.num_of_snakes;i++)
+        score[i] = gameinstance.snake_list[i].score;
+    char * temp;
+    int stemp;
+    for (i=1;i<gameinstance.num_of_snakes;i++){
+       j = i-1;
+       stemp = score[i];
+       temp = names[i];
+       while (j>=0 && score[j]>stemp){
+           names[j+1] = names[j];
+           score[j+1] = score[j];
+           j--;
+       }
+       score[j+1] = stemp;
+       names[j+1] = temp;
     }
-    gotoxy(WIDTH+1, 1);
     textcolor(RED);
     textbackground(YELLOW);
+    gotoxy(WIDTH+1, 1);
     printf("%-4s | %-10s | %-5s\n", "RANK", "NAME", "SCORE");
     for(i = 0; i < gameinstance.num_of_snakes; i++){
         gotoxy(WIDTH+1, i+2);
         textcolor(RED);
         textbackground(YELLOW);
-        printf("%-4d | %-10s | %-5d\n", i+1,gameinstance.snake_list[i].name, gameinstance.snake_list[i].score);
+        printf("%-4d | %-10s | %-5d\n", i+1,names[i], score[i]);
     }
     textattr(RESETATTR);
 }

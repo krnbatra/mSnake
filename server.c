@@ -50,22 +50,21 @@ void* work_sender(void *dataptr){
     }
     sleep(1);
     while (1){
-        while(flag == 0){
-            wait_min = 1;
-            start_timer(0,1000000/FPS);
-            while (wait_min) ;
-            pthread_mutex_lock(&mutex1);
-            for (i=0;i<num_of_connected_players;i++)
-                buffer[i] = network_data[i];
-            pthread_mutex_unlock(&mutex1);
-            int j;
-            for (i=0;i<num_of_connected_players;i++){
-                printf("Sent to player %d over socket %d\n", i, socket_data[i]);
-                if (!alive[i]) continue;
-                    send(socket_data[i], buffer, num_of_connected_players*sizeof(char), 0);
-            }
-            if (num_of_alive_players==0) break;
+        while(flag) {}
+        wait_min = 1;
+        start_timer(0,1000000/FPS);
+        while (wait_min) ;
+        pthread_mutex_lock(&mutex1);
+        for (i=0;i<num_of_connected_players;i++)
+            buffer[i] = network_data[i];
+        pthread_mutex_unlock(&mutex1);
+        int j;
+        for (i=0;i<num_of_connected_players;i++){
+            //printf("Sent to player %d over socket %d\n", i, socket_data[i]);
+            if (!alive[i]) continue;
+            send(socket_data[i], buffer, num_of_connected_players*sizeof(char), 0);
         }
+        if (num_of_alive_players==0) break;
     }
     pthread_exit(NULL);
 }
@@ -118,9 +117,9 @@ void* client_handler(void * dataptr){
                 flag = !flag;
             }
         }
-        close(newSocket);
-        pthread_exit(NULL);
     }
+    close(newSocket);
+    pthread_exit(NULL);
 }
 
 
