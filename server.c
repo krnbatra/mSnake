@@ -28,6 +28,7 @@ int wait_min = 1;
 player_connection_data conn_info[MAX_PLAYERS];
 int alive[MAX_PLAYERS];
 char network_data[MAX_PLAYERS];
+char buffer[MAX_PLAYERS];
 int serverSocket;
 int socket_data[MAX_PLAYERS];
 char name[MAX_PLAYERS][40];
@@ -53,11 +54,13 @@ void* work_sender(void *dataptr){
         while (wait_min) ;
         var = 1;
         pthread_mutex_lock(&mutex1);
+        for (i=0;i<num_of_connected_players;i++)
+            buffer[i] = network_data[i];
+        pthread_mutex_unlock(&mutex1);
         for (i=0;i<num_of_connected_players;i++){
             if (!alive[i]) continue;
-            send(socket_data[i], network_data, num_of_connected_players*sizeof(char), 0);
+            send(socket_data[i], buffer, num_of_connected_players*sizeof(char), 0);
         }
-        pthread_mutex_unlock(&mutex1);
         if (num_of_alive_players==0) break;
         var = 0;
     }
@@ -94,7 +97,6 @@ void* client_handler(void * dataptr){
         perror("Failed in sending information\n");
     char move;
     while (1){
-        //pthread_mutex_lock(&mutex1);
         if (recv(newSocket, &move, sizeof(char), 0) == sizeof(char)){    	
             printf("Received move from %d : %d/%c\n", player_id, move, move);
             if (move == 'X'){
@@ -113,7 +115,6 @@ void* client_handler(void * dataptr){
             printf("Player %d got disconnected\n", player_id);
             break;
         }
-        //pthread_mutex_unlock(&mutex1);
     }
     close(newSocket);
     pthread_exit(NULL);
@@ -122,6 +123,7 @@ void* client_handler(void * dataptr){
 
 int main(){
     int i;
+    srand(time(NULL));
     int height = HEIGHT, width = WIDTH;
     for (i = 0; i < NUM_OBSTACLES; i++) {
         obstacles[i].first = rand()%(width-2)+2;
