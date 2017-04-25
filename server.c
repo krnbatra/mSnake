@@ -18,7 +18,7 @@
 //     int port_no;
 // } player_connection_data, *player_connection_data;
 
-
+//Player with ID 0 is the controller of the server
 
 #define MAX_PLAYERS 8
 #define FPS 10
@@ -38,6 +38,8 @@ void stop_listening(int signal){
 }
 int var;
 
+pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
+
 void* work_sender(void *dataptr){
     int i;
     while (wait_min) {
@@ -49,10 +51,12 @@ void* work_sender(void *dataptr){
         start_timer(0,1000000/FPS);
         while (wait_min) ;
         var = 1;
+        pthread_mutex_lock(&mutex1);
         for (i=0;i<num_of_connected_players;i++){
             if (!alive[i]) continue;
             send(socket_data[i], network_data, num_of_connected_players*sizeof(char), 0);
         }
+        pthread_mutex_unlock(&mutex1);
         if (num_of_alive_players==0) break;
         var = 0;
     }
@@ -89,7 +93,9 @@ void* client_handler(void * dataptr){
                 printf("Player %d dead!\n", player_id);
                 break;
             }
+            pthread_mutex_lock(&mutex1);
             network_data[player_id] = move;
+            pthread_mutex_unlock(&mutex1);
         }
         else{
             alive[player_id] = 0;
