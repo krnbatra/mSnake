@@ -147,7 +147,7 @@ void draw_objects(){
 
 void update_direction(Snake snake, char key){
     int previousDirection = snake->dir;
-        if (key == right && previousDirection!=LEFT){
+    if (key == right && previousDirection!=LEFT){
         snake->dir = RIGHT;
     }
     else if (key == left && previousDirection!=RIGHT){
