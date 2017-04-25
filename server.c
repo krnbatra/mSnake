@@ -22,7 +22,7 @@
 //Player with ID 0 is the controller of the server
 //#define FPS 10
 int FPS = 10;
-const int waiting_time = 10;
+const int waiting_time = 20;
 int num_of_connected_players;
 int num_of_alive_players;
 int wait_min = 1;

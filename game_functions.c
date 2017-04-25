@@ -342,8 +342,8 @@ void check_for_collision(){
                 char * name = gameinstance.snake_list[0].name;
                 int score = gameinstance.snake_list[0].score;
                 j=1;
-                for (j=1;j<gameinstance.num_of_snakes;i++){
-                    if (gameinstance.snake_list[i].score > score) {score = gameinstance.snake_list[i].score; name = gameinstance.snake_list[i].name;}
+                for (j=1;j<gameinstance.num_of_snakes;j++){
+                    if (gameinstance.snake_list[j].score > score) {score = gameinstance.snake_list[j].score; name = gameinstance.snake_list[j].name;}
                 }
                 printf("Player %s won the game\n", name);
                 exit(0);
