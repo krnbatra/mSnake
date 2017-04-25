@@ -13,6 +13,7 @@
 #include "common.h"
 #include "utility.h"
 #include "game_functions.h"
+#include "game_functions_datatypes.h"
 
 // typedef struct player_connection_data{
 //     char name[20];
@@ -28,6 +29,8 @@ char *network_data;
 
 char server_ipaddress[40];
 char my_ipaddress[40];
+char name[40];
+char **names;
 int server_tcp_port_no ;
 int server_udp_port_no;
 int my_tcp_port_no;
@@ -36,71 +39,108 @@ int my_id;
 int status;
 int rstatus;
 
-void * pthread_work(void * data){
-  char c;
-  int arr[2];
-  arr[0] = my_id;
-  while (1){
+extern struct gamestate gameinstance;
+
+void * sender_work(void * data){
+    char c;
+    while (1){
         c = getchar();
-        arr[1] = c;
-        send_udp_wrapper(my_socket, arr, 2*sizeof(int), server_ipaddress, server_udp_port_no);
-  }
+        if (send(my_socket, &c, sizeof(char), 0) != sizeof(char)){
+            printf("problem in sending moves\nso quitting the game\n");
+            exit(0);
+        }
+    }
+}
+
+void * level_up(void *data){
+    int level = 1;
+    int i;
+    while (1){
+        textcolor(BLUE);
+        textbackground(WHITE);
+        gotoxy(WIDTH+3, num_of_connected_players+20);
+        printf("LEVEL : %d\n",level);
+        for (i=0;i<10;i++){
+            textcolor(BLUE);
+            textbackground(WHITE);
+            gotoxy(WIDTH+4, num_of_connected_players+22);
+            printf("Next level in %d seconds\n", 10-i);
+            sleep(1);
+        }
+        level++;
+    }
 }
 
 int main(){
-  printf("Enter server IP address - TCP PORT - UDP PORT\n");
-    strcpy(server_ipaddress, "172.17.49.75");
+    printf("Enter server IP address\n");
     server_tcp_port_no = 8005;
-    server_udp_port_no = 9001;
-  // scanf("%s %d %d",server_ipaddress,&server_tcp_port_no,&server_udp_port_no);
-  printf("Enter your IP address - TCP PORT - UDP PORT\n");
-  // scanf("%s %d %d",my_ipaddress,&my_tcp_port_no,&my_udp_port_no);
-    strcpy(my_ipaddress, "172.17.49.75");
-    my_tcp_port_no = 8006;
-    my_udp_port_no = 9002;
-  
-///////////////////////////////////////
+    scanf("%s",server_ipaddress);
+    printf("Enter your IP address\n");
+    scanf("%s",my_ipaddress);
+    my_tcp_port_no = 8009;
+    printf("Enter your name:\n");
+    scanf("%s", name);
+    int i;
     my_socket = socket(AF_INET, SOCK_STREAM, 0);
     bind_wrapper(my_socket, my_ipaddress, my_tcp_port_no, 1);
     connect_wrapper(my_socket, server_ipaddress, server_tcp_port_no);
-    strcpy(my_data.ipaddr,my_ipaddress); strcpy(my_data.name, "abhishek"); my_data.port_no = my_udp_port_no;
-    size_t returnSend = send(my_socket, &my_data, sizeof(player_connection_data), 0);
-    if(returnSend != sizeof(player_connection_data)){
-        printf("ERROR in sending\n");
+    printf("Connected to the server\n");
+    int arr[2];
+    size_t nr;
+    if ((nr=send(my_socket,name,40*sizeof(char),0)) != 40*sizeof(char)){
+    	perror("Error in sending name\n");
+    	return 1;
     }
-    size_t returnRecv = recv(my_socket, &num_of_connected_players, sizeof(int), 0);
-    if(returnRecv != sizeof(int)){
-        printf("ERROR in receiving\n"); 
-    }
-    printf("Number of connected players: %d\n", num_of_connected_players);
-    conn_info = (Player_connection_data)calloc(num_of_connected_players,sizeof(player_connection_data));
-    size_t returnRecv2 = recv(my_socket, conn_info, num_of_connected_players*sizeof(player_connection_data), 0);
-    if(returnRecv2 != num_of_connected_players*sizeof(player_connection_data))
-        printf("ERROR in receving 2\n");
-    for(int i = 0;i < num_of_connected_players; i++){
-        if (!strcmp(conn_info[i].ipaddr, my_ipaddress) && conn_info[i].port_no==my_udp_port_no){
-          my_id = i;
-          break;
-        }
-    
-    }
-    close(my_socket);
+    names = (char**)malloc(MAX_PLAYERS*sizeof(char*));
+    char * temp = (char*)malloc(sizeof(char)*40*MAX_PLAYERS);
+    for (i=0;i<MAX_PLAYERS;i++)
+    	names[i] = (char*)&temp[i*40];
 
-/////////////////////////////////////////
-    int i;
-    my_socket = socket(AF_INET, SOCK_DGRAM, 0);
-    bind_wrapper(my_socket, my_ipaddress, my_udp_port_no, 0);
-    network_data = (char*)calloc(num_of_connected_players,sizeof(char));
-    initialize_game(num_of_connected_players);
-    pthread_t thread_id;
-    pthread_create(&thread_id, NULL, pthread_work, NULL);
-    while (1){
-      if(recvfrom(my_socket, network_data, num_of_connected_players*sizeof(char), 0, NULL, NULL) != sizeof(char)*num_of_connected_players){
-	perror("Data received incorrectly!");
-      }
-      next_game_state(network_data); //status = 1 means dead
+
+    // printf("Name received correctly\n");
+
+    if (recv(my_socket, gameinstance.obstacles, NUM_OBSTACLES*sizeof(pair), 0) != NUM_OBSTACLES*sizeof(pair)){
+        perror("Obstacles not received correctly\n");
     }
-    pthread_join(thread_id, NULL);
+
+    printf("Obstacles received correctly\n");
+
+    if (recv(my_socket, gameinstance.food_items, NUM_FOOD_ITEMS*sizeof(pair), 0) != NUM_FOOD_ITEMS*sizeof(pair)){
+        perror("Food Items not received correctly\n");
+    }
+    printf("Food items received correctly\n");
+    //for (i=0;i<NUM_FOOD_ITEMS;i++)
+     //   printf("%d %d\n",gameinstance.food_items[i].first,gameinstance.food_items[i].second);
+
+    if (recv(my_socket, temp, 40*MAX_PLAYERS*sizeof(char), 0) != MAX_PLAYERS*sizeof(char)*40){
+        perror("Name not received correctly\n");
+    }
+    else printf("Names received correctly\n");
+    if ((nr = recv(my_socket, arr, 2*sizeof(int), 0)) != 2*sizeof(int)){
+        return 1;
+    }
+    else printf("array received correctly\n");
+    int num_of_connected_players = arr[0];
+    printf("Number of connected players: %d\n", num_of_connected_players);
+    for (i=0;i<num_of_connected_players;i++)
+        printf("Received name : %s\n", names[i]);
+    int my_id = arr[1];
+    printf("Assigned ID : %d\n", my_id);
+
+    network_data = (char*)calloc(num_of_connected_players,sizeof(char));
+    initialize_game(num_of_connected_players, names);
+    pthread_t sender_thread, level;
+    pthread_create(&sender_thread, NULL, sender_work, NULL);
+    pthread_create(&level, NULL, level_up, NULL);
+    while (1){
+        if(recv(my_socket, network_data, num_of_connected_players*sizeof(char), 0) != sizeof(char)*num_of_connected_players){
+            perror("Data received incorrectly!");
+            printf("Server Error\n");
+            exit(0);
+        }
+        next_game_state(network_data); //status = 1 means dead
+    }
+    pthread_join(sender_thread, NULL);
     close(my_socket);
     return 0;
 }
