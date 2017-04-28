@@ -121,6 +121,7 @@ void* client_handler(void * dataptr){
         else {
             alive[player_id] = 1;
             printf("Game closed at player %d\n", player_id);
+            network_data[player_id] = 'X';
             num_of_alive_players--;
             break;
         }

@@ -261,7 +261,20 @@ void move_snake(Snake snake){
 }
 
 int next_game_state(char * moves){
-    int i;
+    int i, j;
+    for (i=0;i<gameinstance.num_of_snakes;i++){
+        if (gameinstance.snake_list[i].alive && moves[i]=='X'){
+            gameinstance.snake_list[i].alive = 0;
+            gameinstance.num_of_live_snakes -= 1;
+            Snake snake = gameinstance.snake_list + i;
+            textattr(RESETATTR);
+            for (j = 0; j < snake->length; j++){
+                textattr(RESETATTR);
+                gotoxy(snake->points[j].first,snake->points[j].second);
+                printf(" ");
+            }
+        }
+    }
     for (i=0;i<gameinstance.num_of_snakes;i++)
         update_direction(gameinstance.snake_list+i, moves[i]);
     for (i=0;i<gameinstance.num_of_snakes;i++)
