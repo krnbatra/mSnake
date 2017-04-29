@@ -1,0 +1,7 @@
+Flow
+
+--Server always running
+    --Start listening for 20 sec.
+    --Start the game with connected players if someone connected in a new process
+    -Repeat.
+
