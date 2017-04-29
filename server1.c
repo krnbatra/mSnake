@@ -132,6 +132,7 @@ void* client_handler2(void *dataptr){
             break;
         }
     }
+    free(arr);
     close(newSocket);
     pthread_exit(NULL);
 }
@@ -147,7 +148,7 @@ void * level_handler(void * dataptr){
 int main(){
     int i;
     srand(time(NULL));
-        // printf("Enter server's IP Address : \n");
+    printf("Enter server's IP Address : \n");
     char my_ip_address[40];
     scanf("%s",my_ip_address);
     // -------------Get server IP Address -------------------
@@ -161,8 +162,11 @@ int main(){
         perror("Some problem in listen\n");
         exit(2);
     }
+    pthread_t tid[MAX_PLAYERS];
     while (1){
+        printf("%ul : Listening for players\n", getpid());
         num_of_connected_players = 0;
+        num_of_alive_players = 0;
         memset(socket_data,0, MAX_PLAYERS*sizeof(int));
         int height = HEIGHT, width = WIDTH;
         for (i = 0; i < NUM_OBSTACLES; i++) {
@@ -172,7 +176,7 @@ int main(){
             fooditems[i].second = rand()%(height-2)+2;
         }
 
-        pthread_t tid[MAX_PLAYERS];
+        
         wait_min = 1;
         signal_bind_wrapper(SIGALRM, stop_listening);
         start_timer(waiting_time, 0);
@@ -189,16 +193,18 @@ int main(){
         }
         for (i = 0; i < num_of_connected_players; i++)
             pthread_join(tid[i], NULL);
+        num_of_alive_players = num_of_connected_players;
         if (num_of_connected_players > 0){
-            num_of_alive_players = num_of_connected_players;
             pid_t my_id = fork();
-            if (my_id == 0){ //parent
-                printf("New room with connected players : %d\n", num_of_connected_players);         
-                continue;
+            printf("New room with connected players : %d\n", num_of_connected_players);  
+            if (my_id == 0){ //child
+                break;
             }
         }
-        else continue;
-        printf("Child process here\n");
+    }
+
+        printf("Child process : %ul here\n", getpid());
+        signal_bind_wrapper(SIGALRM, stop_listening);
         for (i = 0; i < num_of_connected_players; i++){
             int *arr = (int*)malloc(sizeof(int)*2);
             arr[0] = socket_data[i]; arr[1] = i;
@@ -213,6 +219,6 @@ int main(){
         pthread_join(sender, NULL);
         printf("Game over!\n");
         close(serverSocket);
-    }
+        printf("Exiting process %ul\n",getpid());
     return 0;
 }
