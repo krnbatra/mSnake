@@ -273,6 +273,7 @@ int next_game_state(char * moves){
                 gotoxy(snake->points[j].first,snake->points[j].second);
                 printf(" ");
             }
+            continue;
         }
     }
     for (i=0;i<gameinstance.num_of_snakes;i++)
@@ -369,33 +370,43 @@ void display_leaderboard(){
     int i, j;
     char **names = (char**)calloc(gameinstance.num_of_snakes,sizeof(char*));
     int *score = (int*)calloc(gameinstance.num_of_snakes,sizeof(int));
+    int *alive = (int*)calloc(gameinstance.num_of_snakes,sizeof(int));
     for (i=0;i<gameinstance.num_of_snakes;i++)
         names[i] = gameinstance.snake_list[i].name;
-    for (i=0;i<gameinstance.num_of_snakes;i++)
+    for (i=0;i<gameinstance.num_of_snakes;i++){
         score[i] = gameinstance.snake_list[i].score;
+        alive[i] = gameinstance.snake_list[i].alive;
+    }
     char * temp;
     int stemp;
+    int tempAlive;
     for (i=1;i<gameinstance.num_of_snakes;i++){
         j = i-1;
         stemp = score[i];
         temp = names[i];
+        tempAlive = alive[i];
         while (j>=0 && score[j]<stemp){
             names[j+1] = names[j];
             score[j+1] = score[j];
+            alive[j+1] = alive[j];
             j--;
         }
+        alive[j+1] = tempAlive;
         score[j+1] = stemp;
         names[j+1] = temp;
     }
     textcolor(RED);
     textbackground(YELLOW);
     gotoxy(WIDTH+1, 1);
-    printf("%-4s | %-10s | %-5s\n", "RANK", "NAME", "SCORE");
+    printf("%-4s | %-10s | %-5s | %-7s\n", "RANK", "NAME", "SCORE", "STATUS");
     for(i = 0; i < gameinstance.num_of_snakes; i++){
         gotoxy(WIDTH+1, i+2);
         textcolor(RED);
         textbackground(YELLOW);
-        printf("%-4d | %-10s | %-5d\n", i+1,names[i], score[i]);
+        if(alive[i])
+            printf("%-4d | %-10s | %-5d | ALIVE  \n", i+1,names[i], score[i]);
+        else    
+            printf("%-4d | %-10s | %-5d | DEAD   \n", i+1,names[i], score[i]);
     }
     textattr(RESETATTR);
 }
