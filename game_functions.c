@@ -273,6 +273,7 @@ int next_game_state(char * moves){
                 gotoxy(snake->points[j].first,snake->points[j].second);
                 printf(" ");
             }
+            continue;
         }
     }
     for (i=0;i<gameinstance.num_of_snakes;i++)
