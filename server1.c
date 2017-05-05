@@ -75,7 +75,7 @@ void* client_handler(void * dataptr){
     int newSocket = arr[0];
     int player_id = arr[1];
     if (recv(newSocket, name[player_id], 40*sizeof(char), 0) != sizeof(char)*40){
-    	perror("Name not received correctly\n");
+        perror("Name not received correctly\n");
     }
     else printf("Name received %s\n", name[player_id]);
 
@@ -90,20 +90,26 @@ void* client_handler(void * dataptr){
     }
     else 
         printf("Food items sent correctly to %d\n",player_id);
-    while (wait_min) {
-        sleep(1);
-    }
+
+    free(arr);
+    pthread_exit(NULL);
+}
+
+void* client_handler2(void *dataptr){
+    int* arr = (int*)dataptr;
+    int newSocket = arr[0];
+    int player_id = arr[1];
     arr[0] = num_of_connected_players;
     arr[1] = player_id;
     size_t ns;
     if (send(newSocket, name, 40*MAX_PLAYERS*sizeof(char), 0) != MAX_PLAYERS*sizeof(char)*40){
-    	perror("Name not sent correctly\n");
+        perror("Name not sent correctly\n");
     }
     if (send(newSocket, arr, 2*sizeof(int), 0) != 2*sizeof(int))
         perror("Failed in sending information\n");
     char move;
     while (1){
-        if (recv(newSocket, &move, sizeof(char), 0) == sizeof(char)){    	
+        if (recv(newSocket, &move, sizeof(char), 0) == sizeof(char)){       
             printf("Received move from %d : %d/%c\n", player_id, move, move);
             pthread_mutex_lock(&mutex1);
             network_data[player_id] = move;
@@ -126,6 +132,7 @@ void* client_handler(void * dataptr){
             break;
         }
     }
+    free(arr);
     close(newSocket);
     pthread_exit(NULL);
 }
@@ -141,16 +148,10 @@ void * level_handler(void * dataptr){
 int main(){
     int i;
     srand(time(NULL));
-    int height = HEIGHT, width = WIDTH;
-    for (i = 0; i < NUM_OBSTACLES; i++) {
-        obstacles[i].first = rand()%(width-2)+2;
-        obstacles[i].second = rand()%(height-2)+2;
-        fooditems[i].first = rand()%(width-2)+2;
-        fooditems[i].second = rand()%(height-2)+2;
-    }
     printf("Enter server's IP Address : \n");
     char my_ip_address[40];
     scanf("%s",my_ip_address);
+    // -------------Get server IP Address -------------------
     int tcp_port_no;
     tcp_port_no = 8005;
     serverSocket = 0;
@@ -162,30 +163,62 @@ int main(){
         exit(2);
     }
     pthread_t tid[MAX_PLAYERS];
-    wait_min = 1;
-    signal_bind_wrapper(SIGALRM, stop_listening);
-    printf("Listening for players\n");
-    start_timer(waiting_time, 0);
-    for (i = 0; i < MAX_PLAYERS && wait_min; i++){
-        newSocket = accept(serverSocket,NULL,NULL);
-        socket_data[num_of_connected_players] = newSocket;
-        printf("Assigned socket %d to %d", newSocket, num_of_connected_players);
-        alive[num_of_connected_players] = 1;
-        if (newSocket != -1){
-            int *arr = (int*)malloc(sizeof(int)*2);
-            arr[0] = newSocket; arr[1] = num_of_connected_players++;
-            pthread_create(&tid[i], NULL, client_handler,arr);
+    while (1){
+        printf("%ul : Listening for players\n", getpid());
+        num_of_connected_players = 0;
+        num_of_alive_players = 0;
+        memset(socket_data,0, MAX_PLAYERS*sizeof(int));
+        int height = HEIGHT, width = WIDTH;
+        for (i = 0; i < NUM_OBSTACLES; i++) {
+            obstacles[i].first = rand()%(width-2)+2;
+            obstacles[i].second = rand()%(height-2)+2;
+            fooditems[i].first = rand()%(width-2)+2;
+            fooditems[i].second = rand()%(height-2)+2;
+        }
+
+        
+        wait_min = 1;
+        signal_bind_wrapper(SIGALRM, stop_listening);
+        start_timer(waiting_time, 0);
+        for (i = 0; i < MAX_PLAYERS && wait_min; i++){
+            newSocket = accept(serverSocket,NULL,NULL);
+            if (newSocket != -1){
+                socket_data[i] = newSocket;
+                printf("Assigned socket %d to %d\n", newSocket, i);
+                alive[i] = 1; 
+                int *arr = (int*)malloc(sizeof(int)*2);
+                arr[0] = newSocket; arr[1] = num_of_connected_players++;
+                pthread_create(&tid[i], NULL, client_handler,arr);
+            }
+        }
+        for (i = 0; i < num_of_connected_players; i++)
+            pthread_join(tid[i], NULL);
+        num_of_alive_players = num_of_connected_players;
+        if (num_of_connected_players > 0){
+            pid_t my_id = fork();
+            printf("New room with connected players : %d\n", num_of_connected_players);  
+            if (my_id == 0){ //child
+                break;
+            }
         }
     }
-    printf("Number of connected players : %d\n", num_of_connected_players);
-    num_of_alive_players = num_of_connected_players;
-    pthread_t sender,level;
-    pthread_create(&sender, NULL, work_sender, NULL);
-    pthread_create(&level, NULL, level_handler, NULL);
-    for (i = 0; i < num_of_connected_players; i++)
-        pthread_join(tid[i], NULL);
-    pthread_join(sender, NULL);
-    printf("Game over!\n");
-    close(serverSocket);
+
+        printf("Child process : %ul here\n", getpid());
+        signal_bind_wrapper(SIGALRM, stop_listening);
+        for (i = 0; i < num_of_connected_players; i++){
+            int *arr = (int*)malloc(sizeof(int)*2);
+            arr[0] = socket_data[i]; arr[1] = i;
+            pthread_create(&tid[i], NULL, client_handler2,arr);
+        }
+
+        pthread_t sender,level;
+        pthread_create(&sender, NULL, work_sender, NULL);
+        pthread_create(&level, NULL, level_handler, NULL);
+        for (i = 0; i < num_of_connected_players; i++)
+            pthread_join(tid[i], NULL);
+        pthread_join(sender, NULL);
+        printf("Game over!\n");
+        close(serverSocket);
+        printf("Exiting process %ul\n",getpid());
     return 0;
 }
