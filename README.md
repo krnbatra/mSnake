@@ -19,8 +19,8 @@ In another terminal run client executable by _./client_, it will ask for server'
 
 
 Project is done in a team effort by 
-* Abhishek Gupta   (2014A7PS026P)
-* Neeraj Varshney  (2014A7PS103P)
-* Karan Deep Batra (2014A7PS160P)
+* Abhishek Gupta   (2014A7PS0026P)
+* Neeraj Varshney  (2014A7PS0103P)
+* Karan Deep Batra (2014A7PS0160P)
 
 under the guidance of Professor Rahul Banerjee.
